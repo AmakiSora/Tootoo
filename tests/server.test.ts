@@ -135,31 +135,10 @@ describe("HTTP API", () => {
     });
   });
 
-  it("runs an unfinished match to completion", async () => {
-    const app = buildApp();
-    const created = await createMatch(app, {
-      width: 2,
-      height: 2,
-      contestantCount: 3,
-      turnsPerContestant: 2,
-    });
-    const id = (created.body as { id: string }).id;
-    const response = await app.request(`/matches/${id}/run`, {
-      method: "POST",
-    });
-    expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({
-      ply: 6,
-      movesCompleted: [2, 2, 2],
-      finished: true,
-    });
-  });
-
   it.each([
     ["GET", "/matches/missing"],
     ["GET", "/matches/missing/log"],
     ["POST", "/matches/missing/moves"],
-    ["POST", "/matches/missing/run"],
   ])("returns 404 for %s %s", async (method, path) => {
     const response = await buildApp().request(path, {
       method,

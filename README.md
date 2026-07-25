@@ -34,7 +34,6 @@ npm run dev
 | GET | `/matches/:id` | 状态与分数 |
 | GET | `/matches/:id/log` | 步骤日志 |
 | POST | `/matches/:id/moves` | 提交着法 `{ skill, x, y, axis? }` |
-| POST | `/matches/:id/run` | 用随机合法 agent 自动下完 |
 
 ### 示例
 
@@ -42,8 +41,6 @@ npm run dev
 curl -s -X POST http://localhost:3000/matches -H "content-type: application/json" -d "{\"width\":4,\"height\":4,\"turnsPerContestant\":5}"
 
 curl -s -X POST http://localhost:3000/matches/<id>/moves -H "content-type: application/json" -d "{\"skill\":\"dot\",\"x\":1,\"y\":1}"
-
-curl -s -X POST http://localhost:3000/matches/<id>/run
 ```
 
 ## 引擎库

@@ -8,8 +8,6 @@ import {
   getScores,
   MATCH_LIMITS,
   matchPublicView,
-  randomLegalAgent,
-  runMatch,
   type MatchState,
   type Move,
 } from "../engine/index.js";
@@ -112,21 +110,6 @@ export function buildApp() {
     }
     memoryStore.set(id, result.state);
     return c.json({ id, ...summary(result.state) });
-  });
-
-  app.post("/matches/:id/run", async (c) => {
-    const id = c.req.param("id");
-    const state = memoryStore.get(id);
-    if (!state) return c.json({ error: "not_found" }, 404);
-    if (state.finished) {
-      return c.json({ id, ...summary(state) });
-    }
-
-    const n = state.config.contestantCount;
-    const agents = Array.from({ length: n }, () => randomLegalAgent());
-    const final = await runMatch(state, agents, { maxIllegalRetries: 500 });
-    memoryStore.set(id, final);
-    return c.json({ id, ...summary(final) });
   });
 
   return app;
