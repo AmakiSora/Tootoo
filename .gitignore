@@ -1,0 +1,18 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+
+# Local editor and agent state
+.idea/
+.vscode/
+.claude/
+.codex/
+
+# Local architecture decision records
+docs/adr/
+
+# Local environment files
+.env
+.env.*
+!.env.example
