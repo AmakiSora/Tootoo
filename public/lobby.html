@@ -725,6 +725,11 @@
             <div id="tab-create" class="lobby-tab-content active">
                 <form id="createForm" novalidate>
                     <div class="form-grid">
+                        <div class="field full">
+                            <label>你的昵称 <em>留空显示「选手 1」</em></label>
+                            <input id="hostName" type="text" maxlength="24" placeholder="输入你的名字" spellcheck="false">
+                            <span class="err"></span>
+                        </div>
                         <div class="field">
                             <label>棋盘宽度 <em>1–32</em></label>
                             <input name="width" type="number" min="1" max="32" step="1" value="8">
@@ -794,6 +799,11 @@
 
             <div id="tab-join" class="lobby-tab-content">
                 <div class="field">
+                    <label>你的昵称 <em>留空显示「选手 N」</em></label>
+                    <input id="joinName" type="text" maxlength="24" placeholder="输入你的名字" spellcheck="false">
+                    <span class="err"></span>
+                </div>
+                <div class="field" style="margin-top:8px">
                     <label>房间 ID</label>
                     <input id="joinId" type="text" placeholder="粘贴房间 ID" spellcheck="false">
                     <span class="err" id="joinErr"></span>
@@ -869,6 +879,7 @@
     const state = {
         myToken: null,      // this page's single player token (host participates / joiner)
         mySeat: null,       // contestant index bound to myToken
+        myName: null,       // display name registered for myToken
         hostToken: null,    // present only in the room creator's page
         role: null,         // "host" | "player" | null
     };
@@ -886,6 +897,7 @@
                 matchId: id,
                 myToken: state.myToken,
                 mySeat: state.mySeat,
+                myName: state.myName,
                 hostToken: state.hostToken,
             }));
         } catch { /* storage disabled — in-memory session still works */ }
@@ -907,6 +919,7 @@
         healthBadge: $("#healthBadge"), healthText: $("#healthText"),
         apiBase: $("#apiBase"), recheckBtn: $("#recheckBtn"),
         createForm: $("#createForm"), createBtn: $("#createBtn"), hostParticipate: $("#hostParticipate"),
+        hostName: $("#hostName"), joinName: $("#joinName"),
         createResult: $("#createResult"), createdGameId: $("#createdGameId"),
         createdHostToken: $("#createdHostToken"), createdTokenRow: $("#createdTokenRow"),
         createdToken: $("#createdToken"), createSeats: $("#createSeats"),
@@ -966,8 +979,8 @@
         createRoom(cfg) {
             return this.request("POST", "/matches", cfg);
         },
-        joinRoom(id) {
-            return this.request("POST", `/matches/${encodeURIComponent(id)}/join`);
+        joinRoom(id, name) {
+            return this.request("POST", `/matches/${encodeURIComponent(id)}/join`, name ? {name} : undefined);
         },
         startRoom(id, hostToken) {
             return this.request("POST", `/matches/${encodeURIComponent(id)}/start`, undefined, {
@@ -992,6 +1005,16 @@
             el.classList.add("out");
             el.addEventListener("animationend", () => el.remove(), {once: true});
         }, ms);
+    }
+
+    function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, (c) => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        }[c]));
     }
 
     function describeError(err) {
@@ -1113,9 +1136,11 @@
         for (let i = 0; i < lobby.contestantCount; i++) {
             const taken = i < lobby.joinedCount;
             const me = state.mySeat === i && taken;
+            const seat = (lobby.seats || []).find((s) => s.contestant === i);
+            const name = taken ? (seat?.name || `选手 ${i + 1}`) : "";
             rows.push(`<div class="lobby-seat ${taken ? "taken" : ""}">
         <span class="chip-color" style="background:${COLORS[i]};width:12px;height:12px;border-radius:4px"></span>
-        <span>选手 ${i + 1}${taken ? " · 已就位" : " · 等待加入"}</span>
+        <span>${taken ? escapeHtml(name) : `选手 ${i + 1} · 等待加入`}</span>
         ${me ? '<span class="tag">你</span>' : ""}
       </div>`);
         }
@@ -1163,6 +1188,7 @@
             state.hostToken = data.hostToken;
             state.myToken = data.player ? data.player.token : null;
             state.mySeat = data.player ? data.player.contestant : null;
+            state.myName = data.player ? data.player.name : null;
             saveSession(data.id);
             localStorage.setItem("tootoo.lastMatchId", data.id);
 
@@ -1190,11 +1216,12 @@
         els.joinErr.textContent = "";
         setBusy(els.joinBtn, true, "加入中…");
         try {
-            const data = await api.joinRoom(id);
+            const data = await api.joinRoom(id, els.joinName.value.trim());
             state.role = "player";
             state.hostToken = null;
             state.myToken = data.player.token;
             state.mySeat = data.player.contestant;
+            state.myName = data.player.name;
             saveSession(id);
             localStorage.setItem("tootoo.lastMatchId", id);
 
@@ -1202,7 +1229,7 @@
             els.joinResult.classList.remove("hidden");
             updateJoinLobbyView(data.lobby);
             startLobbyPolling(id);
-            toast("success", `已加入房间，你是选手 ${data.player.contestant + 1}`);
+            toast("success", `已加入房间，你是 ${data.player.name || `选手 ${data.player.contestant + 1}`}`);
         } catch (err) {
             els.joinErr.textContent = describeError(err);
             toast("error", describeError(err));
@@ -1241,6 +1268,8 @@
         const body = readCreateForm();
         if (body) {
             body.participate = els.hostParticipate.checked;
+            const name = els.hostName.value.trim();
+            if (name) body.name = name;
             createRoom(body);
         }
     });
@@ -1324,6 +1353,7 @@
         if (session && session.myToken) {
             state.myToken = session.myToken;
             state.mySeat = session.mySeat ?? null;
+            state.myName = session.myName ?? null;
             state.hostToken = session.hostToken || null;
             state.role = session.hostToken ? "host" : "player";
             if (state.role === "player") els.joinId.value = id;

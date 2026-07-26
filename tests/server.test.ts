@@ -17,6 +17,7 @@ function postEmpty(token?: string): RequestInit {
 interface Player {
   contestant: number;
   token: string;
+  name?: string;
 }
 
 interface Lobby {
@@ -24,7 +25,7 @@ interface Lobby {
   phase: string;
   contestantCount: number;
   joinedCount: number;
-  seats: { contestant: number; taken: boolean }[];
+  seats: { contestant: number; taken: boolean; name?: string }[];
 }
 
 async function createRoom(
@@ -122,6 +123,79 @@ describe("HTTP API", () => {
     expect(typeof room.player!.token).toBe("string");
     expect(room.lobby.joinedCount).toBe(1);
   });
+
+  it("stores player names and echoes them in lobby and match views", async () => {
+    const app = buildApp();
+    const room = await createRoom(app, { participate: true, name: "小明" });
+    expect(room.response.status).toBe(201);
+    expect(room.player).toMatchObject({ contestant: 0, name: "小明" });
+    expect(room.lobby.seats[0]).toMatchObject({ name: "小明" });
+
+    const join = await app.request(
+      `/matches/${room.id}/join`,
+      jsonRequest({ name: "小红" }),
+    );
+    expect(join.status).toBe(201);
+    const joinData = (await join.json()) as {
+      player: { contestant: number; name: string };
+    };
+    expect(joinData.player).toMatchObject({ contestant: 1, name: "小红" });
+
+    const lobby = await app.request(`/matches/${room.id}/lobby`);
+    expect(((await lobby.json()) as Lobby).seats.map((s) => s.name)).toEqual([
+      "小明",
+      "小红",
+    ]);
+
+    const started = await app.request(
+      `/matches/${room.id}/start`,
+      postEmpty(room.hostToken),
+    );
+    expect(((await started.json()) as { names: string[] }).names).toEqual([
+      "小明",
+      "小红",
+    ]);
+
+    const fetched = await app.request(`/matches/${room.id}`);
+    expect(((await fetched.json()) as { names: string[] }).names).toEqual([
+      "小明",
+      "小红",
+    ]);
+  });
+
+  it("falls back to default seat names when no name is given", async () => {
+    const app = buildApp();
+    const { id } = await startDuel(app, { width: 2, height: 2 });
+    const fetched = await app.request(`/matches/${id}`);
+    expect(((await fetched.json()) as { names: string[] }).names).toEqual([
+      "选手 1",
+      "选手 2",
+    ]);
+  });
+
+  it.each([{ name: "" }, { name: "   " }, { name: "x".repeat(25) }])(
+    "rejects an invalid join name: %j",
+    async (body) => {
+      const app = buildApp();
+      const room = await createRoom(app, { contestantCount: 2 });
+      const response = await app.request(
+        `/matches/${room.id}/join`,
+        jsonRequest(body),
+      );
+      expect(response.status).toBe(400);
+    },
+  );
+
+  it.each([{ name: "" }, { name: "x".repeat(25) }])(
+    "rejects an invalid host name at creation: %j",
+    async (body) => {
+      const { response } = await createRoom(buildApp(), {
+        participate: true,
+        ...body,
+      });
+      expect(response.status).toBe(400);
+    },
+  );
 
   it.each([
     { contestantCount: 2, firstContestant: 2 },

@@ -1550,7 +1550,7 @@
         line_axis_invalid: "无效的方向参数",
         cross_center_empty: "「十字」的中心必须落在已有颜色的格子上",
         token_required: "缺少选手令牌，无法出招（本页面可能处于观战模式）",
-        token_invalid: "选手令牌无效，不属于本对局",
+        token_invalid: "选手令牌无效，不属于本对局（可能服务已重启，请回大厅重新加入）",
         not_your_turn: "还没轮到该选手出招",
         match_not_started: "对局尚未开始，请等待房主开局",
     };
@@ -1576,6 +1576,13 @@
     function amCurrentPlayer() {
         const m = state.match;
         return !!(m && !m.finished && state.mySeat !== null && m.currentContestant === state.mySeat);
+    }
+
+    /** Display name of a contestant seat — server-provided name or 选手 N. */
+    function seatLabel(i, {markMe = false} = {}) {
+        const m = state.match;
+        const name = (m && Array.isArray(m.names) && m.names[i]) || `选手 ${i + 1}`;
+        return markMe && state.mySeat === i ? `${name}（你）` : name;
     }
 
     function sessionKey(id) {
@@ -1948,7 +1955,7 @@
         els.miContestants.textContent = `${cfg.contestantCount} 人`;
         els.miTurns.textContent = `每人 ${cfg.turnsPerContestant} 回合`;
         els.miSeat.innerHTML = state.mySeat !== null
-            ? `<span class="chip-color" style="background:${COLORS[state.mySeat]};width:12px;height:12px;border-radius:4px"></span>选手 ${state.mySeat + 1}${state.role === "host" ? "（房主）" : ""}`
+            ? `<span class="chip-color" style="background:${COLORS[state.mySeat]};width:12px;height:12px;border-radius:4px"></span>${escapeHtml(seatLabel(state.mySeat))}${state.role === "host" ? "（房主）" : ""}`
             : "👀 观战中";
         els.miStatus.textContent = m.finished ? "已结束 🏁" : "进行中 ▶";
     }
@@ -1961,12 +1968,12 @@
             const top = (m.ranking || []).find((r) => r.rank === 1);
             const mine = top && top.contestant === state.mySeat;
             els.turnWho.innerHTML = top
-                ? `🏁 对局结束 · <span class="chip-color" style="background:${COLORS[top.contestant]}"></span>${mine ? "你获胜" : `选手 ${top.contestant + 1} 获胜`}${(m.ranking || []).filter(r => r.rank === 1).length > 1 ? "（并列）" : ""}`
+                ? `🏁 对局结束 · <span class="chip-color" style="background:${COLORS[top.contestant]}"></span>${mine ? "你获胜" : `${escapeHtml(seatLabel(top.contestant))} 获胜`}${(m.ranking || []).filter(r => r.rank === 1).length > 1 ? "（并列）" : ""}`
                 : "🏁 对局结束";
         } else if (cur === state.mySeat) {
             els.turnWho.innerHTML = `<span class="chip-color" style="background:${COLORS[cur]}"></span>轮到你出招`;
         } else {
-            els.turnWho.innerHTML = `<span class="chip-color" style="background:${COLORS[cur]}"></span>选手 ${cur + 1} 的回合 · 等待中`;
+            els.turnWho.innerHTML = `<span class="chip-color" style="background:${COLORS[cur]}"></span>${escapeHtml(seatLabel(cur))} 的回合 · 等待中`;
         }
         els.turnProgress.style.width = total ? (m.ply / total) * 100 + "%" : "0%";
         els.turnPly.textContent = `第 ${m.ply} / ${total} 手`;
@@ -1981,7 +1988,7 @@
 
         els.snapshotBanner.classList.toggle("hidden", !viewing);
         if (viewing) {
-            els.snapshotText.textContent = `正在回看第 ${viewing.ply + 1} 手后的棋盘快照（选手 ${viewing.contestant + 1} · ${SKILL_NAMES[viewing.move.skill]}）`;
+            els.snapshotText.textContent = `正在回看第 ${viewing.ply + 1} 手后的棋盘快照（${seatLabel(viewing.contestant)} · ${SKILL_NAMES[viewing.move.skill]}）`;
         }
 
         els.board.className = `board ${interactive ? "interactive" : "locked"}`;
@@ -1996,7 +2003,7 @@
                 b.className = "cell" + (owner === null ? "" : " owned");
                 b.dataset.x = x;
                 b.dataset.y = y;
-                b.setAttribute("aria-label", `格子 ${x},${y}${owner === null ? "（空）" : `（选手 ${owner + 1}）`}`);
+                b.setAttribute("aria-label", `格子 ${x},${y}${owner === null ? "（空）" : `（${seatLabel(owner)}）`}`);
                 if (owner !== null) b.style.background = COLORS[owner];
                 if (flashMove) {
                     // flash every cell affected by the applied skill geometry
@@ -2070,7 +2077,7 @@
             return `<div class="contestant ${isCur ? "current" : ""}" style="color:${COLORS[i]}">
       <span class="swatch" style="background:${COLORS[i]}"></span>
       <span class="info">
-        <span class="nm" style="color:var(--ink)">${medal}选手 ${i + 1}${isCur ? '<span class="tag">出招中</span>' : ""}</span>
+        <span class="nm" style="color:var(--ink)">${medal}${escapeHtml(seatLabel(i, {markMe: true}))}${isCur ? '<span class="tag">出招中</span>' : ""}</span>
         <span class="sub">已出手 ${m.movesCompleted[i] ?? 0} / ${cfg.turnsPerContestant}</span>
         <span class="cds">${cdChips}</span>
       </span>
@@ -2109,7 +2116,7 @@
         const rows = m.ranking.map((r) => `
     <div class="rank-row ${r.rank === 1 ? "first" : ""}">
       <span class="medal">${MEDALS[r.rank - 1] || r.rank}</span>
-      <span class="who"><span class="chip-color" style="background:${COLORS[r.contestant]}"></span>选手 ${r.contestant + 1}</span>
+      <span class="who"><span class="chip-color" style="background:${COLORS[r.contestant]}"></span>${escapeHtml(seatLabel(r.contestant, {markMe: true}))}</span>
       <span class="pts">${r.score}<small>格</small></span>
     </div>`).join("");
         els.modalRoot.innerHTML = `

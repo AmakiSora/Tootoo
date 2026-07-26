@@ -32,11 +32,11 @@ npm run dev
 | Method | Path | 说明 | 需要 Token |
 |--------|------|------|-----------|
 | GET | `/health` | 健康检查 | 否 |
-| POST | `/matches` | 创建房间 JSON：`width`, `height`, `contestantCount`, `turnsPerContestant`, `firstContestant`, `participate`（均可选；`participate:true` 时房主占首座并获选手令牌）。响应含 `id`、`hostToken`、`player`、`lobby` | 否 |
-| GET | `/matches/:id/lobby` | 大厅状态（席位占用情况，不含任何令牌） | 否 |
-| POST | `/matches/:id/join` | 加入房间，领取 `{ contestant, token }`；满员 409 `match_full`，已开局 409 `match_already_started` | 否 |
+| POST | `/matches` | 创建房间 JSON：`width`, `height`, `contestantCount`, `turnsPerContestant`, `firstContestant`, `participate`, `name`（均可选；`participate:true` 时房主占首座并获选手令牌，`name` 为房主昵称）。响应含 `id`、`hostToken`、`player`、`lobby` | 否 |
+| GET | `/matches/:id/lobby` | 大厅状态（席位占用与昵称，不含任何令牌） | 否 |
+| POST | `/matches/:id/join` | 加入房间，可传 JSON `{"name":"昵称"}`（可空 body），领取 `{ contestant, token, name }`；满员 409 `match_full`，已开局 409 `match_already_started` | 否 |
 | POST | `/matches/:id/start` | 人满后开局 | **Host 令牌** |
-| GET | `/matches/:id` | 状态与分数（观战可用；未开局时返回大厅视图） | 否 |
+| GET | `/matches/:id` | 状态与分数（观战可用；未开局时返回大厅视图；含 `names` 昵称表，未填者回退为「选手 N」） | 否 |
 | GET | `/matches/:id/log` | 步骤日志（观战可用；未开局 409 `match_not_started`） | 否 |
 | POST | `/matches/:id/moves` | 提交着法 `{ skill, x, y, axis? }` | **选手令牌** |
 
@@ -51,13 +51,13 @@ Authorization: Bearer <token>
 ### 示例
 
 ```bash
-# 创建房间（房主参战，占用 1 号席位）
-curl -s -X POST http://localhost:3000/matches -H "content-type: application/json" -d "{\"width\":4,\"height\":4,\"turnsPerContestant\":5,\"participate\":true}"
-# → {"id":"...","hostToken":"...","player":{"contestant":0,"token":"..."},"lobby":{...}}
+# 创建房间（房主参战，占用 1 号席位，昵称为 Alice）
+curl -s -X POST http://localhost:3000/matches -H "content-type: application/json" -d "{\"width\":4,\"height\":4,\"turnsPerContestant\":5,\"participate\":true,\"name\":\"Alice\"}"
+# → {"id":"...","hostToken":"...","player":{"contestant":0,"token":"...","name":"Alice"},"lobby":{...}}
 
-# 另一位玩家加入（把房间 ID 发给他）
-curl -s -X POST http://localhost:3000/matches/<id>/join
-# → {"player":{"contestant":1,"token":"..."}, ...}
+# 另一位玩家加入（把房间 ID 发给他；name 可选）
+curl -s -X POST http://localhost:3000/matches/<id>/join -H "content-type: application/json" -d "{\"name\":\"Bob\"}"
+# → {"player":{"contestant":1,"token":"...","name":"Bob"}, ...}
 
 # 房主开局
 curl -s -X POST http://localhost:3000/matches/<id>/start -H "authorization: Bearer <hostToken>"

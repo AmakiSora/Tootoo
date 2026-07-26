@@ -20,10 +20,17 @@ export interface MatchRecord {
   tokens: Map<string, number>;
   /** Seats in join order; seatOrder[0] moves first once started. */
   seatOrder: number[];
+  /** Player display names in join order (seats share the same index). */
+  names: string[];
   phase: "lobby" | "active";
 }
 
 const matches = new Map<string, MatchRecord>();
+
+/** Display name a seat falls back to when its player gave none. */
+export function seatName(record: MatchRecord, seat: number): string {
+  return record.names[seat] || `选手 ${seat + 1}`;
+}
 
 export const memoryStore = {
   /** Creates an empty lobby room with a fresh host token. */
@@ -36,6 +43,7 @@ export const memoryStore = {
       hostToken,
       tokens: new Map(),
       seatOrder: [],
+      names: [],
       phase: "lobby",
     });
     return { id, hostToken };
@@ -46,7 +54,7 @@ export const memoryStore = {
   },
 
   /** Claims the next free seat for a new token. Returns the seat, or null when full. */
-  join(id: string): { seat: number; token: string } | null {
+  join(id: string, name = ""): { seat: number; token: string } | null {
     const record = matches.get(id);
     if (!record || record.phase !== "lobby") return null;
     if (record.seatOrder.length >= record.config.contestantCount) return null;
@@ -54,6 +62,7 @@ export const memoryStore = {
     const token = randomUUID();
     record.tokens.set(token, seat);
     record.seatOrder.push(seat);
+    record.names.push(name);
     return { seat, token };
   },
 
