@@ -1404,7 +1404,7 @@
 
 <header class="topbar">
     <div class="brand">
-        <a class="logo" href="lobby.html" title="返回对局大厅"></a>
+        <a class="logo" href="/" title="返回对局大厅"></a>
         <h1>涂涂<small>TOOTOO · AI 涂色对战</small></h1>
     </div>
     <div class="conn">
@@ -1422,7 +1422,7 @@
         <section class="card" id="backCard">
             <h2><span class="ico">🎮</span>对局大厅</h2>
             <p class="back-hint">创建、加入房间或观战请前往大厅页。</p>
-            <a class="btn btn-ghost btn-block back-link" href="lobby.html">← 返回对局大厅</a>
+            <a class="btn btn-ghost btn-block back-link" href="/">← 返回对局大厅</a>
         </section>
 
         <section class="card hidden" id="matchInfoCard">
@@ -1452,7 +1452,7 @@
             </div>
             <h3>这里还没有进行中的对局</h3>
             <p>请前往对局大厅创建房间并邀请对手，或加入别人的房间。<br>轮流涂色，占据格子最多的一方获胜。</p>
-            <a class="btn btn-primary" href="lobby.html">前往对局大厅</a>
+            <a class="btn btn-primary" href="/">前往对局大厅</a>
         </div>
 
         <div class="board-shell hidden" id="boardShell">
@@ -1759,7 +1759,7 @@
         toast("info", "房间尚未开局，正在返回大厅…");
         localStorage.removeItem("tootoo.lastMatchId");
         setTimeout(() => {
-            location.href = "lobby.html" + (id ? "#" + encodeURIComponent(id) : "");
+            location.href = "/" + (id ? "#" + encodeURIComponent(id) : "");
         }, 500);
     }
 
@@ -2127,7 +2127,7 @@
         els.modalRoot.querySelector('[data-act="close"]').addEventListener("click", closeModal);
         els.modalRoot.querySelector('[data-act="again"]').addEventListener("click", () => {
             resetToSetup();
-            location.href = "lobby.html";
+            location.href = "/";
         });
         els.modalRoot.querySelector(".modal-mask").addEventListener("click", (e) => {
             if (e.target.classList.contains("modal-mask")) closeModal();
@@ -2179,7 +2179,7 @@
 
     els.newMatchBtn.addEventListener("click", () => {
         resetToSetup();
-        location.href = "lobby.html";
+        location.href = "/";
     });
 
     els.recheckBtn.addEventListener("click", checkHealth);

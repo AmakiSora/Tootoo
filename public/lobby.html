@@ -1101,7 +1101,7 @@
     function goToMatch(id, {spectate = false} = {}) {
         stopLobbyPolling();
         localStorage.setItem("tootoo.lastMatchId", id);
-        location.href = "play.html#" + encodeURIComponent(id) + (spectate ? "?spectate=1" : "");
+        location.href = "/index.html#" + encodeURIComponent(id) + (spectate ? "?spectate=1" : "");
     }
 
     function renderSeats(container, lobby) {
