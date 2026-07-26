@@ -27,20 +27,43 @@ npm run dev
 
 ### API
 
-| Method | Path | 说明 |
-|--------|------|------|
-| GET | `/health` | 健康检查 |
-| POST | `/matches` | 创建对局 JSON：`width`, `height`, `contestantCount`, `turnsPerContestant`, `firstContestant`（均可选） |
-| GET | `/matches/:id` | 状态与分数 |
-| GET | `/matches/:id/log` | 步骤日志 |
-| POST | `/matches/:id/moves` | 提交着法 `{ skill, x, y, axis? }` |
+对局采用**房间制**：先创建房间拿到 Host 令牌，选手逐个加入领取各自的选手令牌，人齐后房主开局。每个前端页面只持有一个选手令牌，只能操作自己的席位。
+
+| Method | Path | 说明 | 需要 Token |
+|--------|------|------|-----------|
+| GET | `/health` | 健康检查 | 否 |
+| POST | `/matches` | 创建房间 JSON：`width`, `height`, `contestantCount`, `turnsPerContestant`, `firstContestant`, `participate`（均可选；`participate:true` 时房主占首座并获选手令牌）。响应含 `id`、`hostToken`、`player`、`lobby` | 否 |
+| GET | `/matches/:id/lobby` | 大厅状态（席位占用情况，不含任何令牌） | 否 |
+| POST | `/matches/:id/join` | 加入房间，领取 `{ contestant, token }`；满员 409 `match_full`，已开局 409 `match_already_started` | 否 |
+| POST | `/matches/:id/start` | 人满后开局 | **Host 令牌** |
+| GET | `/matches/:id` | 状态与分数（观战可用；未开局时返回大厅视图） | 否 |
+| GET | `/matches/:id/log` | 步骤日志（观战可用；未开局 409 `match_not_started`） | 否 |
+| POST | `/matches/:id/moves` | 提交着法 `{ skill, x, y, axis? }` | **选手令牌** |
+
+出招与开局须携带对应令牌：
+
+```
+Authorization: Bearer <token>
+```
+
+错误码：`token_required` / `token_invalid`（401 选手令牌缺失或无效）、`host_token_required` / `host_token_invalid`（401 房主令牌缺失或无效）、`not_your_turn`（403 非当前选手回合）、`match_not_started` / `match_already_started` / `match_full` / `not_enough_players`（409 房间状态冲突）。
 
 ### 示例
 
 ```bash
-curl -s -X POST http://localhost:3000/matches -H "content-type: application/json" -d "{\"width\":4,\"height\":4,\"turnsPerContestant\":5}"
+# 创建房间（房主参战，占用 1 号席位）
+curl -s -X POST http://localhost:3000/matches -H "content-type: application/json" -d "{\"width\":4,\"height\":4,\"turnsPerContestant\":5,\"participate\":true}"
+# → {"id":"...","hostToken":"...","player":{"contestant":0,"token":"..."},"lobby":{...}}
 
-curl -s -X POST http://localhost:3000/matches/<id>/moves -H "content-type: application/json" -d "{\"skill\":\"dot\",\"x\":1,\"y\":1}"
+# 另一位玩家加入（把房间 ID 发给他）
+curl -s -X POST http://localhost:3000/matches/<id>/join
+# → {"player":{"contestant":1,"token":"..."}, ...}
+
+# 房主开局
+curl -s -X POST http://localhost:3000/matches/<id>/start -H "authorization: Bearer <hostToken>"
+
+# 各自回合内出招
+curl -s -X POST http://localhost:3000/matches/<id>/moves -H "content-type: application/json" -H "authorization: Bearer <playerToken>" -d "{\"skill\":\"dot\",\"x\":1,\"y\":1}"
 ```
 
 ## 引擎库

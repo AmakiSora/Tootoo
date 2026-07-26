@@ -2,6 +2,14 @@
 
 本文档按版本倒序整理主要改动。仓库当前没有 git tag，因此版本边界以明确的版本基线提交为准。
 
+## 0.0.3
+
+- **房间制对局流程**（参照同类项目的大厅设计）：`POST /matches` 创建空房间并签发 `hostToken`；选手经 `POST /matches/:id/join` 逐个加入，各自领取独立的席位令牌；人齐后房主凭 `Authorization: Bearer <hostToken>` 调 `POST /matches/:id/start` 开局。`POST /matches` 新增 `participate` 选项，房主可直接占用 1 号席位参战。
+- **选手令牌隔离**：`POST /matches/:id/moves` 必须携带 `Authorization: Bearer <token>`，服务端校验令牌归属与回合顺序（令牌比对使用 `timingSafeEqual`）。每个玩家只持有自己的令牌，无法替他人出招。
+- 新增错误码：`token_required` / `token_invalid`（401）、`host_token_required` / `host_token_invalid`（401）、`not_your_turn`（403）、`match_not_started` / `match_already_started` / `match_full` / `not_enough_players`（409）。
+- 大厅与观战端点保持开放：`GET /matches/:id/lobby` 返回席位占用（不含令牌）；`GET /matches/:id` 未开局时返回大厅视图、开局后返回对局状态；`GET /matches/:id/log` 观战可用，所有响应均不泄漏令牌。
+- 前端重写为房间流：创建/加入双 Tab 大厅、Host 与 Player 令牌展示与一键复制、席位占用实时轮询、人满后房主一键开局、加入者自动进入对局；对局页绑定单一身份，非己方回合自动轮询同步对手落子，无令牌时进入观战模式；会话存 localStorage，刷新自动恢复身份。
+
 ## 0.0.2
 
 - 新增浏览器前端 `public/index.html`（零依赖单文件中文页面）：创建对局、按 ID 加载、轮流落子、计分排名、日志回看全流程可视化，覆盖 0.0.1 全部 HTTP API。
