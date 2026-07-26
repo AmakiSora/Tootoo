@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { serveStatic } from "@hono/node-server/serve-static";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import {
@@ -111,6 +112,14 @@ export function buildApp() {
     memoryStore.set(id, result.state);
     return c.json({ id, ...summary(result.state) });
   });
+
+  app.use(
+    "/*",
+    serveStatic({
+      root: "./public",
+      rewriteRequestPath: (path) => (path === "/" ? "/index.html" : path),
+    }),
+  );
 
   return app;
 }

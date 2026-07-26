@@ -1,0 +1,2158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>涂涂 Tootoo · AI 涂色对战</title>
+    <style>
+        :root {
+            --bg: #f6f4ef;
+            --card: #ffffff;
+            --ink: #23272f;
+            --muted: #8a8f98;
+            --faint: #b8bcc4;
+            --line: #e9e5dc;
+            --accent: #ff6b6b;
+            --accent2: #4d96ff;
+            --ok: #2fbf71;
+            --warn: #f2a93b;
+            --bad: #e5484d;
+            --c0: #ff6b6b;
+            --c1: #4d96ff;
+            --c2: #f2c94c;
+            --c3: #9b5de5;
+            --shadow: 0 1px 2px rgba(30, 27, 22, .05), 0 8px 24px rgba(30, 27, 22, .06);
+            --radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            font-family: ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: radial-gradient(1200px 500px at 85% -10%, rgba(77, 150, 255, .08), transparent 60%),
+            radial-gradient(1000px 480px at -10% -10%, rgba(255, 107, 107, .09), transparent 55%),
+            var(--bg);
+            color: var(--ink);
+            min-height: 100vh;
+        }
+
+        button {
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        input, select {
+            font-family: inherit;
+        }
+
+        /* ---------- Top bar ---------- */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 14px 24px;
+            flex-wrap: wrap;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand .logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: conic-gradient(from 210deg, var(--c0), var(--c2), var(--c1), var(--c3), var(--c0));
+            box-shadow: inset 0 0 0 3px #fff, var(--shadow);
+        }
+
+        .brand h1 {
+            font-size: 20px;
+            letter-spacing: .5px;
+        }
+
+        .brand h1 small {
+            font-size: 12px;
+            color: var(--muted);
+            font-weight: 600;
+            margin-left: 6px;
+            letter-spacing: 1px;
+        }
+
+        .conn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .conn input {
+            width: 220px;
+            padding: 7px 12px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: var(--card);
+            color: var(--ink);
+            font-size: 13px;
+            outline: none;
+            transition: border-color .15s;
+        }
+
+        .conn input:focus {
+            border-color: var(--accent2);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 12.5px;
+            font-weight: 600;
+            border: 1px solid transparent;
+        }
+
+        .badge .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .badge-checking {
+            color: var(--warn);
+            background: rgba(242, 169, 59, .12);
+            border-color: rgba(242, 169, 59, .3);
+        }
+
+        .badge-checking .dot {
+            animation: pulse 1s infinite;
+        }
+
+        .badge-ok {
+            color: var(--ok);
+            background: rgba(47, 191, 113, .12);
+            border-color: rgba(47, 191, 113, .3);
+        }
+
+        .badge-fail {
+            color: var(--bad);
+            background: rgba(229, 72, 77, .1);
+            border-color: rgba(229, 72, 77, .3);
+            cursor: pointer;
+        }
+
+        @keyframes pulse {
+            50% {
+                opacity: .35;
+            }
+        }
+
+        /* ---------- Layout ---------- */
+        .layout {
+            display: grid;
+            grid-template-columns: 300px minmax(0, 1fr) 320px;
+            gap: 18px;
+            padding: 6px 24px 28px;
+            align-items: start;
+        }
+
+        @media (max-width: 1180px) {
+            .layout {
+                grid-template-columns: 280px minmax(0, 1fr);
+            }
+
+            .panel.right {
+                grid-column: 1 / -1;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 18px;
+            }
+        }
+
+        @media (max-width: 860px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .panel.right {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            min-width: 0;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 18px;
+        }
+
+        .card h2 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card h2 .ico {
+            font-size: 16px;
+        }
+
+        .card h2 .spacer {
+            flex: 1;
+        }
+
+        /* ---------- Forms ---------- */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 12px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .field.full {
+            grid-column: 1 / -1;
+        }
+
+        .field label {
+            font-size: 12px;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .field label em {
+            font-style: normal;
+            color: var(--faint);
+            font-weight: 500;
+            margin-left: 4px;
+        }
+
+        .field input {
+            padding: 8px 11px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            font-size: 14px;
+            color: var(--ink);
+            background: #fbfaf7;
+            outline: none;
+            width: 100%;
+            transition: border-color .15s, box-shadow .15s;
+        }
+
+        .field input:focus {
+            border-color: var(--accent2);
+            box-shadow: 0 0 0 3px rgba(77, 150, 255, .15);
+            background: #fff;
+        }
+
+        .field input.invalid {
+            border-color: var(--bad);
+            box-shadow: 0 0 0 3px rgba(229, 72, 77, .12);
+        }
+
+        .field .err {
+            font-size: 11.5px;
+            color: var(--bad);
+            min-height: 14px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: none;
+            border-radius: 11px;
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 700;
+            transition: transform .08s, box-shadow .15s, opacity .15s, background .15s;
+        }
+
+        .btn:active {
+            transform: translateY(1px) scale(.99);
+        }
+
+        .btn:disabled {
+            opacity: .55;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #ff8f6b);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(255, 107, 107, .35);
+            width: 100%;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            box-shadow: 0 6px 18px rgba(255, 107, 107, .45);
+        }
+
+        .btn-ghost {
+            background: #f2f0ea;
+            color: var(--ink);
+            border: 1px solid var(--line);
+        }
+
+        .btn-ghost:hover:not(:disabled) {
+            background: #e9e6de;
+        }
+
+        .btn-sm {
+            padding: 7px 12px;
+            font-size: 13px;
+            border-radius: 9px;
+        }
+
+        .btn-block {
+            width: 100%;
+            margin-top: 12px;
+        }
+
+        .spinner {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            flex: none;
+            border: 2px solid rgba(255, 255, 255, .35);
+            border-top-color: #fff;
+            animation: spin .7s linear infinite;
+        }
+
+        .spinner.dark {
+            border-color: rgba(35, 39, 47, .2);
+            border-top-color: var(--ink);
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        details.rules {
+            margin-top: 4px;
+        }
+
+        details.rules summary {
+            font-size: 12.5px;
+            color: var(--muted);
+            cursor: pointer;
+            font-weight: 600;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            user-select: none;
+        }
+
+        details.rules summary::before {
+            content: "▸";
+            transition: transform .15s;
+        }
+
+        details.rules[open] summary::before {
+            transform: rotate(90deg);
+        }
+
+        details.rules .rules-body {
+            margin-top: 10px;
+            font-size: 12.5px;
+            color: var(--muted);
+            line-height: 1.75;
+        }
+
+        details.rules b {
+            color: var(--ink);
+        }
+
+        /* ---------- Match info ---------- */
+        .kv {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+            font-size: 13px;
+        }
+
+        .kv .row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .kv .k {
+            color: var(--muted);
+            width: 72px;
+            flex: none;
+        }
+
+        .kv .v {
+            font-weight: 600;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .kv .v.mono {
+            font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+            font-size: 12px;
+        }
+
+        .icon-btn {
+            border: 1px solid var(--line);
+            background: #f7f5f0;
+            border-radius: 8px;
+            padding: 4px 8px;
+            font-size: 12px;
+            color: var(--muted);
+            transition: background .15s, color .15s;
+            flex: none;
+        }
+
+        .icon-btn:hover {
+            background: #edeae2;
+            color: var(--ink);
+        }
+
+        /* ---------- Arena / board ---------- */
+        .arena {
+            min-width: 0;
+        }
+
+        .board-shell {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+            position: relative;
+        }
+
+        .turnbar {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+
+        .turnbar .who {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .chip-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 5px;
+            display: inline-block;
+            flex: none;
+            box-shadow: inset 0 0 0 1.5px rgba(0, 0, 0, .12);
+        }
+
+        .turnbar .progress {
+            flex: 1;
+            min-width: 120px;
+            height: 8px;
+            background: #efece5;
+            border-radius: 99px;
+            overflow: hidden;
+        }
+
+        .turnbar .progress > i {
+            display: block;
+            height: 100%;
+            border-radius: 99px;
+            background: linear-gradient(90deg, var(--accent2), var(--accent));
+            transition: width .35s ease;
+        }
+
+        .turnbar .ply {
+            font-size: 12.5px;
+            color: var(--muted);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .snapshot-banner {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            background: rgba(77, 150, 255, .09);
+            border: 1px solid rgba(77, 150, 255, .3);
+            color: #2f6fd0;
+            border-radius: 11px;
+            padding: 9px 13px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .snapshot-banner button {
+            margin-left: auto;
+        }
+
+        .board-wrap {
+            position: relative;
+        }
+
+        .board {
+            display: grid;
+            gap: 3px;
+            width: 100%;
+            max-width: min(100%, 74vh);
+            margin: 0 auto;
+            background: #efece5;
+            padding: 8px;
+            border-radius: 14px;
+            touch-action: manipulation;
+        }
+
+        .cell {
+            aspect-ratio: 1 / 1;
+            border: none;
+            border-radius: 22%;
+            background: #f7f5f1;
+            box-shadow: inset 0 1px 3px rgba(30, 27, 22, .07);
+            padding: 0;
+            position: relative;
+            transition: transform .1s, box-shadow .12s, background .2s, outline .1s;
+            outline: 2px solid transparent;
+            outline-offset: -2px;
+            min-width: 0;
+        }
+
+        .board.interactive .cell:hover {
+            transform: scale(1.06);
+            box-shadow: 0 2px 8px rgba(30, 27, 22, .18);
+            z-index: 2;
+        }
+
+        .cell.owned {
+            box-shadow: inset 0 0 0 1.5px rgba(0, 0, 0, .12);
+        }
+
+        .cell.pv-center {
+            outline-color: var(--ink);
+        }
+
+        .cell.pv-arm {
+            outline-color: rgba(35, 39, 47, .45);
+            outline-style: dashed;
+        }
+
+        .cell.pv-bad {
+            outline-color: var(--bad);
+            background: rgba(229, 72, 77, .18) !important;
+        }
+
+        .cell.flash {
+            animation: flash .45s ease;
+        }
+
+        @keyframes flash {
+            0% {
+                filter: brightness(1.7);
+            }
+            100% {
+                filter: none;
+            }
+        }
+
+        .board.locked .cell {
+            cursor: not-allowed;
+        }
+
+        .board.interactive .cell {
+            cursor: pointer;
+        }
+
+        .board-overlay {
+            position: absolute;
+            inset: 0;
+            border-radius: 14px;
+            z-index: 5;
+            background: rgba(255, 255, 255, .55);
+            backdrop-filter: blur(1.5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--ink);
+        }
+
+        /* ---------- Empty state ---------- */
+        .empty {
+            background: var(--card);
+            border: 1.5px dashed var(--line);
+            border-radius: 20px;
+            padding: 64px 32px;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+
+        .empty .art {
+            display: grid;
+            grid-template-columns: repeat(4, 26px);
+            gap: 5px;
+            justify-content: center;
+            margin-bottom: 22px;
+        }
+
+        .empty .art i {
+            width: 26px;
+            height: 26px;
+            border-radius: 7px;
+            background: #efece5;
+            animation: bob 2.2s ease-in-out infinite;
+        }
+
+        .empty .art i:nth-child(4n+1) {
+            animation-delay: .1s;
+        }
+
+        .empty .art i:nth-child(4n+2) {
+            animation-delay: .25s;
+        }
+
+        .empty .art i:nth-child(4n+3) {
+            animation-delay: .4s;
+        }
+
+        .empty .art i:nth-child(4n+4) {
+            animation-delay: .55s;
+        }
+
+        .empty .art i.f0 {
+            background: var(--c0);
+        }
+
+        .empty .art i.f1 {
+            background: var(--c1);
+        }
+
+        .empty .art i.f2 {
+            background: var(--c2);
+        }
+
+        .empty .art i.f3 {
+            background: var(--c3);
+        }
+
+        @keyframes bob {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        .empty h3 {
+            font-size: 19px;
+            margin-bottom: 8px;
+        }
+
+        .empty p {
+            color: var(--muted);
+            font-size: 13.5px;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .empty .btn-primary {
+            width: auto;
+            padding: 11px 26px;
+        }
+
+        /* ---------- Skills ---------- */
+        .skill-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .skill {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-align: left;
+            border: 1.5px solid var(--line);
+            background: #fbfaf7;
+            border-radius: 13px;
+            padding: 11px 13px;
+            transition: border-color .15s, background .15s, box-shadow .15s;
+            position: relative;
+        }
+
+        .skill:hover:not(:disabled) {
+            border-color: #d8d3c6;
+            background: #fff;
+        }
+
+        .skill.active {
+            border-color: var(--ink);
+            background: #fff;
+            box-shadow: 0 3px 12px rgba(30, 27, 22, .1);
+        }
+
+        .skill:disabled {
+            opacity: .55;
+            cursor: not-allowed;
+        }
+
+        .skill .glyph {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            flex: none;
+            display: grid;
+            place-items: center;
+            font-size: 17px;
+            color: #fff;
+            font-weight: 800;
+        }
+
+        .skill[data-skill="dot"] .glyph {
+            background: linear-gradient(135deg, #ff9f6b, var(--accent));
+        }
+
+        .skill[data-skill="cross"] .glyph {
+            background: linear-gradient(135deg, #6bb8ff, var(--accent2));
+        }
+
+        .skill[data-skill="line"] .glyph {
+            background: linear-gradient(135deg, #c58bff, var(--c3));
+        }
+
+        .skill .meta {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .skill .meta .name {
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .skill .meta .name kbd {
+            font-family: inherit;
+            font-size: 10.5px;
+            background: #eeebe4;
+            border-radius: 5px;
+            padding: 1.5px 5px;
+            color: var(--muted);
+            border: 1px solid var(--line);
+        }
+
+        .skill .meta .desc {
+            font-size: 11.5px;
+            color: var(--muted);
+            margin-top: 3px;
+            line-height: 1.5;
+        }
+
+        .cd-pill {
+            flex: none;
+            font-size: 11px;
+            font-weight: 700;
+            border-radius: 999px;
+            padding: 3px 9px;
+            background: rgba(47, 191, 113, .12);
+            color: var(--ok);
+            border: 1px solid rgba(47, 191, 113, .3);
+        }
+
+        .cd-pill.on {
+            background: rgba(242, 169, 59, .13);
+            color: #d18a1d;
+            border-color: rgba(242, 169, 59, .4);
+        }
+
+        .axis-toggle {
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .axis-toggle.show {
+            display: grid;
+        }
+
+        .axis-toggle button {
+            padding: 9px;
+            border-radius: 10px;
+            border: 1.5px solid var(--line);
+            background: #fbfaf7;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--muted);
+            transition: all .15s;
+        }
+
+        .axis-toggle button.active {
+            border-color: var(--c3);
+            color: var(--c3);
+            background: rgba(155, 93, 229, .08);
+        }
+
+        .hint-line {
+            font-size: 11.5px;
+            color: var(--faint);
+            margin-top: 10px;
+            line-height: 1.6;
+        }
+
+        /* ---------- Contestants ---------- */
+        .contestant-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .contestant {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 13px;
+            border: 1.5px solid var(--line);
+            border-radius: 13px;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        .contestant.current {
+            border-color: var(--ink);
+            box-shadow: 0 3px 12px rgba(30, 27, 22, .1);
+        }
+
+        .contestant .swatch {
+            width: 30px;
+            height: 30px;
+            border-radius: 9px;
+            flex: none;
+            box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .6), inset 0 0 0 3px rgba(0, 0, 0, .08);
+            position: relative;
+        }
+
+        .contestant.current .swatch::after {
+            content: "";
+            position: absolute;
+            inset: -5px;
+            border-radius: 12px;
+            border: 2px solid currentColor;
+            animation: pulse 1.2s infinite;
+        }
+
+        .contestant .info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .contestant .info .nm {
+            font-size: 13.5px;
+            font-weight: 700;
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .contestant .info .nm .tag {
+            font-size: 10px;
+            background: var(--ink);
+            color: #fff;
+            padding: 1.5px 6px;
+            border-radius: 99px;
+            font-weight: 700;
+        }
+
+        .contestant .info .sub {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 3px;
+        }
+
+        .contestant .score {
+            font-size: 22px;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .contestant .cds {
+            display: flex;
+            gap: 4px;
+            margin-top: 5px;
+        }
+
+        .contestant .cds i {
+            font-style: normal;
+            font-size: 10px;
+            padding: 1px 6px;
+            border-radius: 99px;
+            background: #f0ede6;
+            color: var(--faint);
+            font-weight: 700;
+        }
+
+        .contestant .cds i.on {
+            background: rgba(242, 169, 59, .15);
+            color: #d18a1d;
+        }
+
+        /* ---------- Log ---------- */
+        .log-card {
+            display: flex;
+            flex-direction: column;
+            min-height: 180px;
+        }
+
+        .log-list {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            overflow-y: auto;
+            max-height: 380px;
+            padding-right: 4px;
+        }
+
+        .log-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .log-list::-webkit-scrollbar-thumb {
+            background: #ddd8cd;
+            border-radius: 99px;
+        }
+
+        .log-item {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: 1px solid var(--line);
+            background: #fbfaf7;
+            font-size: 12.5px;
+            cursor: pointer;
+            transition: background .13s, border-color .13s;
+        }
+
+        .log-item:hover {
+            background: #f3f0e9;
+            border-color: #d9d4c7;
+        }
+
+        .log-item .ply-no {
+            color: var(--faint);
+            font-weight: 700;
+            font-size: 11px;
+            width: 26px;
+            flex: none;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .log-item .what {
+            flex: 1;
+            min-width: 0;
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .log-item .what small {
+            color: var(--muted);
+            font-weight: 500;
+            margin-left: 5px;
+        }
+
+        .log-item .mini {
+            display: flex;
+            gap: 3px;
+            flex: none;
+        }
+
+        .log-item .mini b {
+            font-size: 10.5px;
+            font-weight: 700;
+            padding: 1px 5px;
+            border-radius: 6px;
+            color: #fff;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .log-empty {
+            color: var(--faint);
+            font-size: 12.5px;
+            text-align: center;
+            padding: 28px 0;
+            line-height: 1.8;
+        }
+
+        .skeleton {
+            border-radius: 10px;
+            height: 36px;
+            background: linear-gradient(90deg, #f1eee7 25%, #e8e4da 50%, #f1eee7 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.2s infinite;
+        }
+
+        @keyframes shimmer {
+            to {
+                background-position: -200% 0;
+            }
+        }
+
+        /* ---------- Toasts ---------- */
+        #toastRoot {
+            position: fixed;
+            top: 18px;
+            right: 18px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 340px;
+        }
+
+        .toast {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px 15px;
+            border-radius: 13px;
+            background: var(--card);
+            box-shadow: 0 8px 30px rgba(30, 27, 22, .16);
+            border: 1px solid var(--line);
+            font-size: 13.5px;
+            font-weight: 600;
+            line-height: 1.55;
+            animation: slideIn .25s cubic-bezier(.2, .9, .3, 1.2);
+        }
+
+        .toast.out {
+            animation: slideOut .25s ease forwards;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(30px);
+                opacity: 0;
+            }
+        }
+
+        @keyframes slideOut {
+            to {
+                transform: translateX(40px);
+                opacity: 0;
+            }
+        }
+
+        .toast .t-ico {
+            flex: none;
+            font-size: 15px;
+        }
+
+        .toast-error {
+            border-left: 4px solid var(--bad);
+        }
+
+        .toast-success {
+            border-left: 4px solid var(--ok);
+        }
+
+        .toast-info {
+            border-left: 4px solid var(--accent2);
+        }
+
+        /* ---------- Modal ---------- */
+        .modal-mask {
+            position: fixed;
+            inset: 0;
+            z-index: 90;
+            background: rgba(35, 39, 47, .42);
+            backdrop-filter: blur(3px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn .2s ease;
+            padding: 20px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+        }
+
+        .modal {
+            background: var(--card);
+            border-radius: 22px;
+            padding: 30px 28px;
+            width: 420px;
+            max-width: 100%;
+            box-shadow: 0 24px 60px rgba(30, 27, 22, .3);
+            animation: popIn .3s cubic-bezier(.2, .9, .3, 1.25);
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(.9) translateY(14px);
+                opacity: 0;
+            }
+        }
+
+        .modal h3 {
+            text-align: center;
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        .modal .sub {
+            text-align: center;
+            color: var(--muted);
+            font-size: 13px;
+            margin-bottom: 22px;
+        }
+
+        .rank-row {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            padding: 12px 14px;
+            border-radius: 13px;
+            border: 1.5px solid var(--line);
+            margin-bottom: 9px;
+        }
+
+        .rank-row.first {
+            border-color: var(--c2);
+            background: rgba(242, 201, 76, .1);
+        }
+
+        .rank-row .medal {
+            font-size: 21px;
+            width: 30px;
+            text-align: center;
+            flex: none;
+        }
+
+        .rank-row .who {
+            flex: 1;
+            font-weight: 700;
+            font-size: 14.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .rank-row .pts {
+            font-size: 19px;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .rank-row .pts small {
+            font-size: 11px;
+            color: var(--muted);
+            font-weight: 600;
+            margin-left: 2px;
+        }
+
+        .modal .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal .actions .btn {
+            flex: 1;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .mt8 {
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<header class="topbar">
+    <div class="brand">
+        <div class="logo"></div>
+        <h1>涂涂<small>TOOTOO · AI 涂色对战</small></h1>
+    </div>
+    <div class="conn">
+        <span id="healthBadge" class="badge badge-checking"><span class="dot"></span><span
+                id="healthText">检查中…</span></span>
+        <input id="apiBase" type="text" spellcheck="false" title="API 服务地址">
+        <button id="recheckBtn" class="icon-btn" title="重新检查服务连接">重连</button>
+    </div>
+</header>
+
+<main class="layout">
+
+    <!-- ============ Left panel ============ -->
+    <aside class="panel left">
+        <section class="card" id="createCard">
+            <h2><span class="ico">🎮</span>创建对局</h2>
+            <form id="createForm" novalidate>
+                <div class="form-grid">
+                    <div class="field">
+                        <label>棋盘宽度 <em>1–32</em></label>
+                        <input name="width" type="number" min="1" max="32" step="1" value="8">
+                        <span class="err"></span>
+                    </div>
+                    <div class="field">
+                        <label>棋盘高度 <em>1–32</em></label>
+                        <input name="height" type="number" min="1" max="32" step="1" value="8">
+                        <span class="err"></span>
+                    </div>
+                    <div class="field">
+                        <label>选手数量 <em>2–4</em></label>
+                        <input name="contestantCount" type="number" min="2" max="4" step="1" value="2">
+                        <span class="err"></span>
+                    </div>
+                    <div class="field">
+                        <label>每人回合 <em>1–200</em></label>
+                        <input name="turnsPerContestant" type="number" min="1" max="200" step="1" value="20">
+                        <span class="err"></span>
+                    </div>
+                    <div class="field full">
+                        <label>先手选手 <em>0 起，留空默认 0</em></label>
+                        <input name="firstContestant" type="number" min="0" max="3" step="1" placeholder="0">
+                        <span class="err"></span>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block" id="createBtn">开始对战</button>
+            </form>
+
+            <details class="rules mt8">
+                <summary>规则速览</summary>
+                <div class="rules-body">
+                    选手们轮流在棋盘上使用技能涂色，所有人用完全部回合后，按占据格子数排名。<br>
+                    <b>● 单点</b>：涂 1 格，无冷却。<br>
+                    <b>✚ 十字</b>：需选中有色格为中心，清除中心并染四邻（己方中心染己色，敌方中心染敌色），冷却 1 回合。<br>
+                    <b>☰ 行列</b>：整行/列中空格染己色、敌格清空，冷却 2 回合。<br>
+                    冷却按「己方回合」计数，轮到自已时自动减 1。
+                </div>
+            </details>
+        </section>
+
+        <section class="card">
+            <h2><span class="ico">🔍</span>加载对局</h2>
+            <div class="field">
+                <label>对局 ID</label>
+                <input id="loadId" type="text" placeholder="粘贴已有对局 ID" spellcheck="false">
+                <span class="err" id="loadErr"></span>
+            </div>
+            <button class="btn btn-ghost btn-block" id="loadBtn">加载</button>
+        </section>
+
+        <section class="card hidden" id="matchInfoCard">
+            <h2><span class="ico">📋</span>对局信息<span class="spacer"></span>
+                <button class="icon-btn" id="newMatchBtn" title="结束当前视图，回到创建面板">新对局</button>
+            </h2>
+            <div class="kv">
+                <div class="row"><span class="k">ID</span><span class="v mono" id="miId"></span>
+                    <button class="icon-btn" id="copyIdBtn">复制</button>
+                </div>
+                <div class="row"><span class="k">棋盘</span><span class="v" id="miBoard"></span></div>
+                <div class="row"><span class="k">选手</span><span class="v" id="miContestants"></span></div>
+                <div class="row"><span class="k">回合</span><span class="v" id="miTurns"></span></div>
+                <div class="row"><span class="k">状态</span><span class="v" id="miStatus"></span></div>
+            </div>
+        </section>
+    </aside>
+
+    <!-- ============ Arena ============ -->
+    <section class="arena">
+        <div class="empty" id="emptyState">
+            <div class="art">
+                <i class="f0"></i><i></i><i class="f1"></i><i></i>
+                <i></i><i class="f2"></i><i></i><i class="f3"></i>
+                <i class="f1"></i><i></i><i class="f0"></i><i></i>
+                <i></i><i class="f3"></i><i></i><i class="f2"></i>
+            </div>
+            <h3>还没有进行中的对局</h3>
+            <p>在左侧配置棋盘与选手，或直接使用默认配置快速开局。<br>轮流涂色，占据格子最多的一方获胜。</p>
+            <button class="btn btn-primary" id="quickStartBtn">⚡ 快速开局（8×8 · 2 人 · 20 回合）</button>
+        </div>
+
+        <div class="board-shell hidden" id="boardShell">
+            <div class="turnbar">
+                <div class="who" id="turnWho"></div>
+                <div class="progress"><i id="turnProgress" style="width:0%"></i></div>
+                <div class="ply" id="turnPly"></div>
+            </div>
+            <div class="snapshot-banner hidden" id="snapshotBanner">
+                <span id="snapshotText"></span>
+                <button class="btn btn-sm btn-ghost" id="exitSnapshotBtn">返回当前局面</button>
+            </div>
+            <div class="board-wrap">
+                <div class="board" id="board"></div>
+                <div class="board-overlay hidden" id="boardOverlay"><span class="spinner dark"></span><span
+                        id="overlayText">提交中…</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ Right panel ============ -->
+    <aside class="panel right">
+        <section class="card" id="skillsCard">
+            <h2><span class="ico">🎯</span>技能</h2>
+            <div class="skill-list" id="skillList">
+                <button class="skill active" data-skill="dot">
+                    <span class="glyph">●</span>
+                    <span class="meta">
+            <span class="name">单点 <kbd>1</kbd></span>
+            <span class="desc">涂色 1 格：空格或敌格归己</span>
+          </span>
+                    <span class="cd-pill" data-cd>无冷却</span>
+                </button>
+                <button class="skill" data-skill="cross">
+                    <span class="glyph">✚</span>
+                    <span class="meta">
+            <span class="name">十字 <kbd>2</kbd></span>
+            <span class="desc">清中心、染四邻，需以有色格为中心</span>
+          </span>
+                    <span class="cd-pill" data-cd>就绪</span>
+                </button>
+                <button class="skill" data-skill="line">
+                    <span class="glyph">☰</span>
+                    <span class="meta">
+            <span class="name">行列 <kbd>3</kbd></span>
+            <span class="desc">整行/列：空格染己、敌格清空</span>
+          </span>
+                    <span class="cd-pill" data-cd>就绪</span>
+                </button>
+            </div>
+            <div class="axis-toggle" id="axisToggle">
+                <button data-axis="row" class="active">↔ 整行</button>
+                <button data-axis="col">↕ 整列</button>
+            </div>
+            <p class="hint-line">快捷键 1/2/3 切换技能，Q 切换行列方向。悬停棋盘可预览落子范围，点击格子出手。</p>
+        </section>
+
+        <section class="card hidden" id="contestantsCard">
+            <h2><span class="ico">🏆</span>计分板</h2>
+            <div class="contestant-list" id="contestantList"></div>
+        </section>
+
+        <section class="card log-card" id="logCard">
+            <h2><span class="ico">📜</span>对局日志<span class="spacer"></span>
+                <button class="icon-btn hidden" id="refreshLogBtn" title="重新拉取日志">刷新</button>
+            </h2>
+            <div class="log-list" id="logList">
+                <div class="log-empty">开局后，这里会按时间记录每一步着法。<br>点击任意一条可回看当时的棋盘快照。</div>
+            </div>
+        </section>
+    </aside>
+</main>
+
+<div id="toastRoot"></div>
+<div id="modalRoot"></div>
+
+<script>
+    "use strict";
+
+    /* ================= Constants ================= */
+
+    const LIMITS = {
+        width: {min: 1, max: 32},
+        height: {min: 1, max: 32},
+        contestantCount: {min: 2, max: 4},
+        turnsPerContestant: {min: 1, max: 200},
+    };
+    const COLORS = ["#ff6b6b", "#4d96ff", "#f2c94c", "#9b5de5"];
+    const SKILL_NAMES = {dot: "单点", cross: "十字", line: "行列"};
+    const SKILL_GLYPHS = {dot: "●", cross: "✚", line: "☰"};
+    const AXIS_NAMES = {row: "整行", col: "整列"};
+    const MEDALS = ["🥇", "🥈", "🥉", "4️⃣"];
+
+    const ERROR_TEXT = {
+        not_found: "对局不存在或已被清理",
+        match_finished: "对局已结束，无法继续落子",
+        unknown_skill: "未知技能",
+        skill_on_cooldown: "技能冷却中，本回合不可用",
+        out_of_bounds: "坐标超出棋盘范围",
+        line_axis_required: "使用「行列」技能需要先选择方向（行/列）",
+        line_axis_invalid: "无效的方向参数",
+        cross_center_empty: "「十字」的中心必须落在已有颜色的格子上",
+    };
+
+    /* ================= State ================= */
+
+    const state = {
+        match: null,        // API summary: { id, config, cells, cooldowns, currentContestant, movesCompleted, ply, finished, scores, ranking? }
+        log: [],
+        skill: "dot",
+        axis: "row",
+        busy: false,        // a move request is in flight
+        snapshot: null,     // a MatchLogEntry being previewed, or null
+        logLoaded: false,
+    };
+
+    const $ = (sel) => document.querySelector(sel);
+    const els = {
+        healthBadge: $("#healthBadge"), healthText: $("#healthText"),
+        apiBase: $("#apiBase"), recheckBtn: $("#recheckBtn"),
+        createForm: $("#createForm"), createBtn: $("#createBtn"),
+        loadId: $("#loadId"), loadBtn: $("#loadBtn"), loadErr: $("#loadErr"),
+        matchInfoCard: $("#matchInfoCard"),
+        miId: $("#miId"), miBoard: $("#miBoard"), miContestants: $("#miContestants"),
+        miTurns: $("#miTurns"), miStatus: $("#miStatus"),
+        copyIdBtn: $("#copyIdBtn"), newMatchBtn: $("#newMatchBtn"),
+        emptyState: $("#emptyState"), quickStartBtn: $("#quickStartBtn"),
+        boardShell: $("#boardShell"), board: $("#board"),
+        boardOverlay: $("#boardOverlay"), overlayText: $("#overlayText"),
+        turnWho: $("#turnWho"), turnProgress: $("#turnProgress"), turnPly: $("#turnPly"),
+        snapshotBanner: $("#snapshotBanner"), snapshotText: $("#snapshotText"), exitSnapshotBtn: $("#exitSnapshotBtn"),
+        skillList: $("#skillList"), axisToggle: $("#axisToggle"),
+        contestantsCard: $("#contestantsCard"), contestantList: $("#contestantList"),
+        logList: $("#logList"), refreshLogBtn: $("#refreshLogBtn"),
+        toastRoot: $("#toastRoot"), modalRoot: $("#modalRoot"),
+    };
+
+    /* ================= API client ================= */
+
+    class ApiError extends Error {
+        constructor(status, data) {
+            super(`HTTP ${status}`);
+            this.status = status;
+            this.data = data;
+        }
+    }
+
+    const api = {
+        get base() {
+            return (els.apiBase.value || "").trim().replace(/\/+$/, "");
+        },
+        async request(method, path, body) {
+            const ctrl = new AbortController();
+            const timer = setTimeout(() => ctrl.abort(), 12000);
+            let res;
+            try {
+                res = await fetch(this.base + path, {
+                    method,
+                    headers: body !== undefined ? {"content-type": "application/json"} : undefined,
+                    body: body !== undefined ? JSON.stringify(body) : undefined,
+                    signal: ctrl.signal,
+                    cache: "no-store",
+                });
+            } catch (err) {
+                if (err.name === "AbortError") throw new Error("请求超时，请检查服务是否正常运行");
+                throw new Error("无法连接服务器，请确认 API 地址与 dev 服务状态");
+            } finally {
+                clearTimeout(timer);
+            }
+            let data = null;
+            try {
+                data = await res.json();
+            } catch { /* non-JSON body */
+            }
+            if (!res.ok) throw new ApiError(res.status, data);
+            return data;
+        },
+        health() {
+            return this.request("GET", "/health");
+        },
+        createMatch(cfg) {
+            return this.request("POST", "/matches", cfg);
+        },
+        getMatch(id) {
+            return this.request("GET", `/matches/${encodeURIComponent(id)}`);
+        },
+        getLog(id) {
+            return this.request("GET", `/matches/${encodeURIComponent(id)}/log`);
+        },
+        postMove(id, move) {
+            return this.request("POST", `/matches/${encodeURIComponent(id)}/moves`, move);
+        },
+    };
+
+    /* ================= Toasts ================= */
+
+    function toast(type, msg, ms = 3600) {
+        const icons = {error: "⛔", success: "✅", info: "💡"};
+        const el = document.createElement("div");
+        el.className = `toast toast-${type}`;
+        el.innerHTML = `<span class="t-ico">${icons[type] || "💡"}</span><span></span>`;
+        el.lastChild.textContent = msg;
+        els.toastRoot.appendChild(el);
+        setTimeout(() => {
+            el.classList.add("out");
+            el.addEventListener("animationend", () => el.remove(), {once: true});
+        }, ms);
+    }
+
+    function describeError(err) {
+        if (err instanceof ApiError) {
+            const d = err.data;
+            if (d && typeof d.error === "string" && ERROR_TEXT[d.error]) return ERROR_TEXT[d.error];
+            if (d && d.error && Array.isArray(d.error.issues) && d.error.issues.length) {
+                const i = d.error.issues[0];
+                return `参数校验未通过：${i.path?.join(".") || ""} ${i.message || ""}`.trim();
+            }
+            if (err.status === 404) return ERROR_TEXT.not_found;
+            return `请求失败（HTTP ${err.status}）`;
+        }
+        return err.message || "未知错误";
+    }
+
+    /* ================= Health check ================= */
+
+    let healthTimer = null;
+
+    async function checkHealth() {
+        setHealth("checking", "检查中…");
+        try {
+            await api.health();
+            setHealth("ok", "服务正常");
+        } catch {
+            setHealth("fail", "连接失败 · 点击重试");
+        }
+    }
+
+    function setHealth(kind, text) {
+        els.healthBadge.className = `badge badge-${kind}`;
+        els.healthText.textContent = text;
+    }
+
+    function startHealthPolling() {
+        clearInterval(healthTimer);
+        healthTimer = setInterval(checkHealth, 15000);
+    }
+
+    /* ================= Form validation ================= */
+
+    function validateIntField(input, {min, max}, {optional = false} = {}) {
+        const raw = input.value.trim();
+        const errEl = input.parentElement.querySelector(".err");
+        const fail = (msg) => {
+            input.classList.add("invalid");
+            errEl.textContent = msg;
+            return null;
+        };
+        if (raw === "") {
+            if (optional) {
+                input.classList.remove("invalid");
+                errEl.textContent = "";
+                return undefined;
+            }
+            return fail("必填");
+        }
+        const n = Number(raw);
+        if (!Number.isInteger(n)) return fail("必须为整数");
+        if (n < min || n > max) return fail(`需在 ${min}–${max} 之间`);
+        input.classList.remove("invalid");
+        errEl.textContent = "";
+        return n;
+    }
+
+    function readCreateForm() {
+        const f = els.createForm;
+        const width = validateIntField(f.width, LIMITS.width);
+        const height = validateIntField(f.height, LIMITS.height);
+        const contestantCount = validateIntField(f.contestantCount, LIMITS.contestantCount);
+        const turnsPerContestant = validateIntField(f.turnsPerContestant, LIMITS.turnsPerContestant);
+        let firstContestant = validateIntField(f.firstContestant, {min: 0, max: 3}, {optional: true});
+        if (firstContestant === null) return null;
+        if ([width, height, contestantCount, turnsPerContestant].some((v) => v === null)) return null;
+        if (firstContestant !== undefined && contestantCount !== null && firstContestant >= contestantCount) {
+            f.firstContestant.classList.add("invalid");
+            f.firstContestant.parentElement.querySelector(".err").textContent = `需小于选手数量（${contestantCount}）`;
+            return null;
+        }
+        const body = {width, height, contestantCount, turnsPerContestant};
+        if (firstContestant !== undefined) body.firstContestant = firstContestant;
+        return body;
+    }
+
+    /* ================= Mutations ================= */
+
+    function setBusy(btn, busy, busyText) {
+        if (busy) {
+            btn.dataset.label = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<span class="spinner"></span>${busyText}`;
+        } else {
+            btn.disabled = false;
+            if (btn.dataset.label) btn.innerHTML = btn.dataset.label;
+        }
+    }
+
+    async function createMatch(body) {
+        setBusy(els.createBtn, true, "创建中…");
+        try {
+            const summary = await api.createMatch(body);
+            acceptMatch(summary);
+            toast("success", "对局已创建，轮到选手 " + (summary.currentContestant + 1) + " 出手");
+            refreshLog();
+        } catch (err) {
+            toast("error", describeError(err));
+        } finally {
+            setBusy(els.createBtn, false);
+        }
+    }
+
+    async function loadMatch(id, {silent404 = false} = {}) {
+        if (!id) {
+            els.loadErr.textContent = "请输入对局 ID";
+            return;
+        }
+        els.loadErr.textContent = "";
+        setBusy(els.loadBtn, true, "加载中…");
+        try {
+            const summary = await api.getMatch(id);
+            acceptMatch(summary);
+            toast("success", "对局加载成功");
+            refreshLog();
+        } catch (err) {
+            if (silent404 && err instanceof ApiError && err.status === 404) {
+                localStorage.removeItem("tootoo.lastMatchId");
+            } else {
+                els.loadErr.textContent = describeError(err);
+                toast("error", describeError(err));
+            }
+        } finally {
+            setBusy(els.loadBtn, false);
+        }
+    }
+
+    async function submitMove(x, y) {
+        const m = state.match;
+        if (!m || state.busy || m.finished || state.snapshot) return;
+
+        const illegal = clientLegality(x, y);
+        if (illegal) {
+            toast("error", ERROR_TEXT[illegal]);
+            return;
+        }
+
+        const move = {skill: state.skill, x, y};
+        if (state.skill === "line") move.axis = state.axis;
+
+        state.busy = true;
+        els.overlayText.textContent = "提交中…";
+        els.boardOverlay.classList.remove("hidden");
+        try {
+            const summary = await api.postMove(m.id, move);
+            const justFinished = summary.finished && !state.match.finished;
+            state.match = summary;
+            localStorage.setItem("tootoo.lastMatchId", summary.id);
+            renderAll({flashMove: move});
+            refreshLog();
+            if (justFinished) setTimeout(showResultModal, 550);
+        } catch (err) {
+            toast("error", describeError(err));
+            // State may have drifted (e.g. match finished by another client) — resync silently.
+            try {
+                state.match = await api.getMatch(m.id);
+                renderAll();
+            } catch { /* keep local view */
+            }
+        } finally {
+            state.busy = false;
+            els.boardOverlay.classList.add("hidden");
+        }
+    }
+
+    async function refreshLog() {
+        if (!state.match) return;
+        const id = state.match.id;
+        els.refreshLogBtn.classList.remove("hidden");
+        if (!state.logLoaded) {
+            els.logList.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
+        }
+        try {
+            const data = await api.getLog(id);
+            if (!state.match || state.match.id !== id) return; // switched match meanwhile
+            state.log = data.log || [];
+            state.logLoaded = true;
+            renderLog();
+        } catch (err) {
+            if (!state.logLoaded) {
+                els.logList.innerHTML = '<div class="log-empty">日志加载失败：' + escapeHtml(describeError(err)) + "</div>";
+            }
+        }
+    }
+
+    /* ================= Client-side legality (mirror of server rules, for UX only) ================= */
+
+    function cellOwnerAt(cells, w, x, y) {
+        return cells[y * w + x] ?? null;
+    }
+
+    function clientLegality(x, y) {
+        const m = state.match;
+        if (!m) return "not_found";
+        if (m.finished) return "match_finished";
+        const {width, height} = m.config;
+        if (x < 0 || y < 0 || x >= width || y >= height) return "out_of_bounds";
+        const cd = m.cooldowns[m.currentContestant]?.[state.skill] ?? 0;
+        if (cd > 0) return "skill_on_cooldown";
+        if (state.skill === "line" && !state.axis) return "line_axis_required";
+        if (state.skill === "cross" && cellOwnerAt(m.cells, width, x, y) === null) return "cross_center_empty";
+        return null;
+    }
+
+    /** Cells affected by a skill at (x, y) — for hover preview and move flash. */
+    function affectedCells(x, y, skill = state.skill, axis = state.axis) {
+        const {width, height} = state.match.config;
+        const cells = [];
+        const push = (cx, cy, role) => {
+            if (cx >= 0 && cy >= 0 && cx < width && cy < height) cells.push({x: cx, y: cy, role});
+        };
+        if (skill === "dot") {
+            push(x, y, "center");
+        } else if (skill === "cross") {
+            push(x, y, "center");
+            push(x, y - 1, "arm");
+            push(x, y + 1, "arm");
+            push(x - 1, y, "arm");
+            push(x + 1, y, "arm");
+        } else if (skill === "line") {
+            if (axis === "row") for (let cx = 0; cx < width; cx++) push(cx, y, cx === x ? "center" : "arm");
+            else for (let cy = 0; cy < height; cy++) push(x, cy, cy === y ? "center" : "arm");
+        }
+        return cells;
+    }
+
+    /* ================= Rendering ================= */
+
+    function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, (c) => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        }[c]));
+    }
+
+    function renderAll(opts = {}) {
+        const has = !!state.match;
+        els.emptyState.classList.toggle("hidden", has);
+        els.boardShell.classList.toggle("hidden", !has);
+        els.matchInfoCard.classList.toggle("hidden", !has);
+        els.contestantsCard.classList.toggle("hidden", !has);
+        els.refreshLogBtn.classList.toggle("hidden", !has);
+        if (!has) {
+            renderSkills();
+            return;
+        }
+        renderMatchInfo();
+        renderTurnbar();
+        renderBoard(opts);
+        renderSkills();
+        renderContestants();
+    }
+
+    function renderMatchInfo() {
+        const m = state.match, cfg = m.config;
+        els.miId.textContent = m.id;
+        els.miId.title = m.id;
+        els.miBoard.textContent = `${cfg.width} × ${cfg.height}`;
+        els.miContestants.textContent = `${cfg.contestantCount} 人`;
+        els.miTurns.textContent = `每人 ${cfg.turnsPerContestant} 回合`;
+        els.miStatus.textContent = m.finished ? "已结束 🏁" : "进行中 ▶";
+    }
+
+    function renderTurnbar() {
+        const m = state.match, cfg = m.config;
+        const total = cfg.turnsPerContestant * cfg.contestantCount;
+        const cur = m.currentContestant;
+        if (m.finished) {
+            const top = (m.ranking || []).find((r) => r.rank === 1);
+            els.turnWho.innerHTML = top
+                ? `🏁 对局结束 · <span class="chip-color" style="background:${COLORS[top.contestant]}"></span>选手 ${top.contestant + 1} 获胜${(m.ranking || []).filter(r => r.rank === 1).length > 1 ? "（并列）" : ""}`
+                : "🏁 对局结束";
+        } else {
+            els.turnWho.innerHTML = `<span class="chip-color" style="background:${COLORS[cur]}"></span>选手 ${cur + 1} 的回合`;
+        }
+        els.turnProgress.style.width = total ? (m.ply / total) * 100 + "%" : "0%";
+        els.turnPly.textContent = `第 ${m.ply} / ${total} 手`;
+    }
+
+    function renderBoard({flashMove} = {}) {
+        const m = state.match;
+        const cfg = m.config;
+        const viewing = state.snapshot;
+        const cells = viewing ? viewing.cells : m.cells;
+        const interactive = !m.finished && !state.busy && !viewing;
+
+        els.snapshotBanner.classList.toggle("hidden", !viewing);
+        if (viewing) {
+            els.snapshotText.textContent = `正在回看第 ${viewing.ply + 1} 手后的棋盘快照（选手 ${viewing.contestant + 1} · ${SKILL_NAMES[viewing.move.skill]}）`;
+        }
+
+        els.board.className = `board ${interactive ? "interactive" : "locked"}`;
+        els.board.style.gridTemplateColumns = `repeat(${cfg.width}, 1fr)`;
+
+        const frag = document.createDocumentFragment();
+        for (let y = 0; y < cfg.height; y++) {
+            for (let x = 0; x < cfg.width; x++) {
+                const owner = cellOwnerAt(cells, cfg.width, x, y);
+                const b = document.createElement("button");
+                b.type = "button";
+                b.className = "cell" + (owner === null ? "" : " owned");
+                b.dataset.x = x;
+                b.dataset.y = y;
+                b.setAttribute("aria-label", `格子 ${x},${y}${owner === null ? "（空）" : `（选手 ${owner + 1}）`}`);
+                if (owner !== null) b.style.background = COLORS[owner];
+                if (flashMove) {
+                    // flash every cell affected by the applied skill geometry
+                    const aff = affectedCells(flashMove.x, flashMove.y, flashMove.skill, flashMove.axis);
+                    if (aff.some((a) => a.x === x && a.y === y)) b.classList.add("flash");
+                }
+                frag.appendChild(b);
+            }
+        }
+        els.board.replaceChildren(frag);
+    }
+
+    function clearPreview() {
+        els.board.querySelectorAll(".pv-center,.pv-arm,.pv-bad").forEach((c) => {
+            c.classList.remove("pv-center", "pv-arm", "pv-bad");
+            c.style.outlineColor = "";
+        });
+    }
+
+    function showPreview(x, y) {
+        clearPreview();
+        if (!state.match || state.match.finished || state.busy || state.snapshot) return;
+        const illegal = clientLegality(x, y);
+        for (const a of affectedCells(x, y)) {
+            const el = els.board.children[a.y * state.match.config.width + a.x];
+            if (!el) continue;
+            el.classList.add(illegal ? "pv-bad" : a.role === "center" ? "pv-center" : "pv-arm");
+            if (!illegal && a.role === "center") {
+                el.style.outlineColor = COLORS[state.match.currentContestant];
+            }
+        }
+    }
+
+    function renderSkills() {
+        const m = state.match;
+        const cds = m && !m.finished ? m.cooldowns[m.currentContestant] : null;
+        els.skillList.querySelectorAll(".skill").forEach((btn) => {
+            const skill = btn.dataset.skill;
+            btn.classList.toggle("active", state.skill === skill);
+            const cd = cds ? (cds[skill] ?? 0) : 0;
+            btn.disabled = !m || m.finished || cd > 0;
+            const pill = btn.querySelector("[data-cd]");
+            if (skill === "dot") {
+                pill.textContent = "无冷却";
+                pill.className = "cd-pill";
+            } else if (cd > 0) {
+                pill.textContent = `冷却 ${cd} 回合`;
+                pill.className = "cd-pill on";
+            } else {
+                pill.textContent = "就绪";
+                pill.className = "cd-pill";
+            }
+        });
+        els.axisToggle.classList.toggle("show", state.skill === "line");
+        els.axisToggle.querySelectorAll("button").forEach((b) => b.classList.toggle("active", state.axis === b.dataset.axis));
+    }
+
+    function renderContestants() {
+        const m = state.match, cfg = m.config;
+        const rankOf = {};
+        (m.ranking || []).forEach((r) => {
+            rankOf[r.contestant] = r.rank;
+        });
+        const rows = m.scores.map((score, i) => {
+            const cd = m.cooldowns[i] || {};
+            const cdChips = ["dot", "cross", "line"]
+                .map((s) => `<i class="${(cd[s] ?? 0) > 0 ? "on" : ""}" title="${SKILL_NAMES[s]}冷却">${SKILL_GLYPHS[s]} ${cd[s] ?? 0}</i>`)
+                .join("");
+            const isCur = !m.finished && i === m.currentContestant;
+            const medal = m.finished && rankOf[i] ? MEDALS[rankOf[i] - 1] + " " : "";
+            return `<div class="contestant ${isCur ? "current" : ""}" style="color:${COLORS[i]}">
+      <span class="swatch" style="background:${COLORS[i]}"></span>
+      <span class="info">
+        <span class="nm" style="color:var(--ink)">${medal}选手 ${i + 1}${isCur ? '<span class="tag">出招中</span>' : ""}</span>
+        <span class="sub">已出手 ${m.movesCompleted[i] ?? 0} / ${cfg.turnsPerContestant}</span>
+        <span class="cds">${cdChips}</span>
+      </span>
+      <span class="score" style="color:var(--ink)">${score}</span>
+    </div>`;
+        });
+        els.contestantList.innerHTML = rows.join("");
+    }
+
+    function renderLog() {
+        const log = state.log;
+        if (!log.length) {
+            els.logList.innerHTML = '<div class="log-empty">还没有着法记录。<br>在棋盘上点击格子落下第一手吧。</div>';
+            return;
+        }
+        const w = state.match?.config.width ?? 0;
+        const items = log.slice().reverse().map((e) => {
+            const mv = e.move;
+            const axis = mv.skill === "line" ? ` · ${AXIS_NAMES[mv.axis] || mv.axis}` : "";
+            const scores = e.scores.map((s, i) => `<b style="background:${COLORS[i]}">${s}</b>`).join("");
+            return `<div class="log-item" data-ply="${e.ply}" title="点击回看此手之后的棋盘快照">
+      <span class="ply-no">#${e.ply + 1}</span>
+      <span class="chip-color" style="background:${COLORS[e.contestant]};width:12px;height:12px;border-radius:4px"></span>
+      <span class="what">${SKILL_GLYPHS[mv.skill]} ${SKILL_NAMES[mv.skill]}<small>(${mv.x}, ${mv.y})${axis}</small></span>
+      <span class="mini">${scores}</span>
+    </div>`;
+        });
+        els.logList.innerHTML = items.join("");
+    }
+
+    /* ================= Result modal ================= */
+
+    function showResultModal() {
+        const m = state.match;
+        if (!m || !m.finished || !m.ranking) return;
+        const rows = m.ranking.map((r) => `
+    <div class="rank-row ${r.rank === 1 ? "first" : ""}">
+      <span class="medal">${MEDALS[r.rank - 1] || r.rank}</span>
+      <span class="who"><span class="chip-color" style="background:${COLORS[r.contestant]}"></span>选手 ${r.contestant + 1}</span>
+      <span class="pts">${r.score}<small>格</small></span>
+    </div>`).join("");
+        els.modalRoot.innerHTML = `
+    <div class="modal-mask">
+      <div class="modal">
+        <h3>🏁 对局结束</h3>
+        <p class="sub">共 ${m.ply} 手 · 棋盘 ${m.config.width}×${m.config.height}</p>
+        ${rows}
+        <div class="actions">
+          <button class="btn btn-ghost" data-act="close">查看棋盘</button>
+          <button class="btn btn-primary" data-act="again" style="width:auto">再来一局</button>
+        </div>
+      </div>
+    </div>`;
+        els.modalRoot.querySelector('[data-act="close"]').addEventListener("click", closeModal);
+        els.modalRoot.querySelector('[data-act="again"]').addEventListener("click", () => {
+            closeModal();
+            resetToSetup();
+            window.scrollTo({top: 0, behavior: "smooth"});
+        });
+        els.modalRoot.querySelector(".modal-mask").addEventListener("click", (e) => {
+            if (e.target.classList.contains("modal-mask")) closeModal();
+        });
+    }
+
+    function closeModal() {
+        els.modalRoot.innerHTML = "";
+    }
+
+    /* ================= Flow helpers ================= */
+
+    function acceptMatch(summary) {
+        state.match = summary;
+        state.snapshot = null;
+        state.log = [];
+        state.logLoaded = false;
+        localStorage.setItem("tootoo.lastMatchId", summary.id);
+        closeModal();
+        renderAll();
+    }
+
+    function resetToSetup() {
+        state.match = null;
+        state.snapshot = null;
+        state.log = [];
+        state.logLoaded = false;
+        localStorage.removeItem("tootoo.lastMatchId");
+        els.loadId.value = "";
+        els.logList.innerHTML = '<div class="log-empty">开局后，这里会按时间记录每一步着法。<br>点击任意一条可回看当时的棋盘快照。</div>';
+        renderAll();
+    }
+
+    /* ================= Events ================= */
+
+    els.createForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const body = readCreateForm();
+        if (body) createMatch(body);
+    });
+    ["input", "change"].forEach((ev) =>
+        els.createForm.addEventListener(ev, (e) => {
+            if (e.target.matches("input")) readCreateFormSilently(e.target);
+        })
+    );
+
+    function readCreateFormSilently(target) {
+        const f = els.createForm;
+        if (target === f.firstContestant) {
+            validateIntField(f.firstContestant, {min: 0, max: 3}, {optional: true});
+        } else if (target.name && LIMITS[target.name]) {
+            validateIntField(target, LIMITS[target.name]);
+        }
+    }
+
+    els.quickStartBtn.addEventListener("click", () => createMatch({}));
+
+    els.loadBtn.addEventListener("click", () => loadMatch(els.loadId.value.trim()));
+    els.loadId.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") loadMatch(els.loadId.value.trim());
+    });
+
+    els.copyIdBtn.addEventListener("click", async () => {
+        if (!state.match) return;
+        try {
+            await navigator.clipboard.writeText(state.match.id);
+            toast("success", "对局 ID 已复制", 1800);
+        } catch {
+            toast("info", "复制失败，请手动选择 ID 复制");
+        }
+    });
+
+    els.newMatchBtn.addEventListener("click", resetToSetup);
+
+    els.recheckBtn.addEventListener("click", checkHealth);
+    els.healthBadge.addEventListener("click", () => {
+        if (els.healthBadge.classList.contains("badge-fail")) checkHealth();
+    });
+    els.apiBase.addEventListener("change", () => {
+        localStorage.setItem("tootoo.apiBase", els.apiBase.value.trim());
+        checkHealth();
+    });
+
+    els.skillList.addEventListener("click", (e) => {
+        const btn = e.target.closest(".skill");
+        if (!btn) return;
+        if (btn.disabled) {
+            const m = state.match;
+            const cd = m ? (m.cooldowns[m.currentContestant]?.[btn.dataset.skill] ?? 0) : 0;
+            toast("error", cd > 0 ? `「${SKILL_NAMES[btn.dataset.skill]}」冷却中，还需 ${cd} 个己方回合` : "对局已结束");
+            return;
+        }
+        state.skill = btn.dataset.skill;
+        renderSkills();
+        clearPreview();
+    });
+
+    els.axisToggle.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-axis]");
+        if (!btn) return;
+        state.axis = btn.dataset.axis;
+        renderSkills();
+        clearPreview();
+    });
+
+    // Board interactions (event delegation)
+    els.board.addEventListener("mouseover", (e) => {
+        const cell = e.target.closest(".cell");
+        if (!cell) return;
+        showPreview(Number(cell.dataset.x), Number(cell.dataset.y));
+    });
+    els.board.addEventListener("mouseleave", clearPreview);
+    els.board.addEventListener("click", (e) => {
+        const cell = e.target.closest(".cell");
+        if (!cell) return;
+        if (state.snapshot) {
+            toast("info", "正在查看历史快照，请先返回当前局面");
+            return;
+        }
+        submitMove(Number(cell.dataset.x), Number(cell.dataset.y));
+    });
+
+    els.refreshLogBtn.addEventListener("click", refreshLog);
+
+    els.logList.addEventListener("click", (e) => {
+        const item = e.target.closest(".log-item");
+        if (!item || !state.match) return;
+        const entry = state.log.find((l) => l.ply === Number(item.dataset.ply));
+        if (!entry) return;
+        state.snapshot = entry;
+        renderBoard();
+        window.scrollTo({top: 0, behavior: "smooth"});
+    });
+
+    els.exitSnapshotBtn.addEventListener("click", () => {
+        state.snapshot = null;
+        renderBoard();
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener("keydown", (e) => {
+        if (e.target.matches("input, textarea, select")) return;
+        const map = {"1": "dot", "2": "cross", "3": "line"};
+        if (map[e.key]) {
+            const btn = els.skillList.querySelector(`.skill[data-skill="${map[e.key]}"]`);
+            if (btn && !btn.disabled) {
+                state.skill = map[e.key];
+                renderSkills();
+                clearPreview();
+            }
+        } else if (e.key.toLowerCase() === "q" && state.skill === "line") {
+            state.axis = state.axis === "row" ? "col" : "row";
+            renderSkills();
+            clearPreview();
+        } else if (e.key === "Escape") {
+            if (els.modalRoot.firstChild) closeModal();
+            else if (state.snapshot) {
+                state.snapshot = null;
+                renderBoard();
+            }
+        }
+    });
+
+    /* ================= Init ================= */
+
+    (function init() {
+        const savedBase = localStorage.getItem("tootoo.apiBase");
+        els.apiBase.value = savedBase
+            || (location.protocol.startsWith("http") ? location.origin : "http://localhost:3000");
+
+        checkHealth();
+        startHealthPolling();
+
+        const lastId = localStorage.getItem("tootoo.lastMatchId");
+        if (lastId) {
+            els.loadId.value = lastId;
+            loadMatch(lastId, {silent404: true});
+        }
+    })();
+</script>
+</body>
+</html>
