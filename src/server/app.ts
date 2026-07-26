@@ -225,7 +225,7 @@ export function buildApp() {
     "/*",
     serveStatic({
       root: "./public",
-      rewriteRequestPath: (path) => (path === "/" ? "/index.html" : path),
+      rewriteRequestPath: (path) => (path === "/" ? "/lobby.html" : path),
     }),
   );
 

@@ -8,7 +8,7 @@
 - **选手令牌隔离**：`POST /matches/:id/moves` 必须携带 `Authorization: Bearer <token>`，服务端校验令牌归属与回合顺序（令牌比对使用 `timingSafeEqual`）。每个玩家只持有自己的令牌，无法替他人出招。
 - 新增错误码：`token_required` / `token_invalid`（401）、`host_token_required` / `host_token_invalid`（401）、`not_your_turn`（403）、`match_not_started` / `match_already_started` / `match_full` / `not_enough_players`（409）。
 - 大厅与观战端点保持开放：`GET /matches/:id/lobby` 返回席位占用（不含令牌）；`GET /matches/:id` 未开局时返回大厅视图、开局后返回对局状态；`GET /matches/:id/log` 观战可用，所有响应均不泄漏令牌。
-- 前端重写为房间流：创建/加入双 Tab 大厅、Host 与 Player 令牌展示与一键复制、席位占用实时轮询、人满后房主一键开局、加入者自动进入对局；对局页绑定单一身份，非己方回合自动轮询同步对手落子，无令牌时进入观战模式；会话存 localStorage，刷新自动恢复身份。
+- 前端拆分为两个页面：`/lobby.html`（站点首页 `/`）承担创建/加入双 Tab 大厅、Host 与 Player 令牌展示与一键复制、席位占用实时轮询、人满后房主一键开局；`/index.html` 为对局页，绑定单一身份，非己方回合自动轮询同步对手落子，无令牌时进入观战模式。开局后大厅页自动跳转对局页；对局页「新对局」「再来一局」返回大厅；对局页遇到未开局房间自动跳回大厅；会话存 localStorage，刷新自动恢复身份。
 
 ## 0.0.2
 

@@ -75,6 +75,7 @@
             border-radius: 12px;
             background: conic-gradient(from 210deg, var(--c0), var(--c2), var(--c1), var(--c3), var(--c0));
             box-shadow: inset 0 0 0 3px #fff, var(--shadow);
+            display: block;
         }
 
         .brand h1 {
@@ -326,6 +327,10 @@
             background: #e9e6de;
         }
 
+        a.btn {
+            text-decoration: none;
+        }
+
         .btn-sm {
             padding: 7px 12px;
             font-size: 13px;
@@ -559,6 +564,17 @@
             color: var(--muted);
             font-weight: 600;
             margin-top: 10px;
+        }
+
+        .back-hint {
+            font-size: 12.5px;
+            color: var(--muted);
+            line-height: 1.7;
+            margin-bottom: 10px;
+        }
+
+        .back-link {
+            box-sizing: border-box;
         }
 
         /* ---------- Match info ---------- */
@@ -1388,7 +1404,7 @@
 
 <header class="topbar">
     <div class="brand">
-        <div class="logo"></div>
+        <a class="logo" href="lobby.html" title="返回对局大厅"></a>
         <h1>涂涂<small>TOOTOO · AI 涂色对战</small></h1>
     </div>
     <div class="conn">
@@ -1403,120 +1419,16 @@
 
     <!-- ============ Left panel ============ -->
     <aside class="panel left">
-        <section class="card" id="lobbyCard">
+        <section class="card" id="backCard">
             <h2><span class="ico">🎮</span>对局大厅</h2>
-            <div class="lobby-tabs">
-                <button type="button" class="lobby-tab active" data-tab="create">创建房间</button>
-                <button type="button" class="lobby-tab" data-tab="join">加入房间</button>
-            </div>
-
-            <div id="tab-create" class="lobby-tab-content active">
-                <form id="createForm" novalidate>
-                    <div class="form-grid">
-                        <div class="field">
-                            <label>棋盘宽度 <em>1–32</em></label>
-                            <input name="width" type="number" min="1" max="32" step="1" value="8">
-                            <span class="err"></span>
-                        </div>
-                        <div class="field">
-                            <label>棋盘高度 <em>1–32</em></label>
-                            <input name="height" type="number" min="1" max="32" step="1" value="8">
-                            <span class="err"></span>
-                        </div>
-                        <div class="field">
-                            <label>选手数量 <em>2–4</em></label>
-                            <input name="contestantCount" type="number" min="2" max="4" step="1" value="2">
-                            <span class="err"></span>
-                        </div>
-                        <div class="field">
-                            <label>每人回合 <em>1–200</em></label>
-                            <input name="turnsPerContestant" type="number" min="1" max="200" step="1" value="20">
-                            <span class="err"></span>
-                        </div>
-                        <div class="field full">
-                            <label>先手选手 <em>0 起，留空默认 0</em></label>
-                            <input name="firstContestant" type="number" min="0" max="3" step="1" placeholder="0">
-                            <span class="err"></span>
-                        </div>
-                    </div>
-                    <label class="checkbox-field field full" style="margin-top:10px">
-                        <input type="checkbox" id="hostParticipate" checked>
-                        <span>我也参战（占用 1 号席位）</span>
-                    </label>
-                    <button type="submit" class="btn btn-primary btn-block" id="createBtn">创建房间</button>
-                </form>
-
-                <details class="rules mt8">
-                    <summary>规则速览</summary>
-                    <div class="rules-body">
-                        选手们轮流在棋盘上使用技能涂色，所有人用完全部回合后，按占据格子数排名。<br>
-                        <b>● 单点</b>：涂 1 格，无冷却。<br>
-                        <b>✚ 十字</b>：需选中有色格为中心，清除中心并染四邻（己方中心染己色，敌方中心染敌色），冷却 1 回合。<br>
-                        <b>☰ 行列</b>：整行/列中空格染己色、敌格清空，冷却 2 回合。<br>
-                        冷却按「己方回合」计数，轮到自已时自动减 1。
-                    </div>
-                </details>
-
-                <div id="createResult" class="lobby-result hidden">
-                    <div class="info-row">
-                        <span class="info-label">房间 ID</span>
-                        <code class="info-value" id="createdGameId"></code>
-                        <button class="icon-btn" data-copy="createdGameId">复制</button>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Host</span>
-                        <code class="info-value" id="createdHostToken"></code>
-                        <button class="icon-btn" data-copy="createdHostToken">复制</button>
-                    </div>
-                    <div class="info-row hidden" id="createdTokenRow">
-                        <span class="info-label">Player</span>
-                        <code class="info-value" id="createdToken"></code>
-                        <button class="icon-btn" data-copy="createdToken">复制</button>
-                    </div>
-                    <p class="lobby-hint">把房间 ID 发给其他玩家；Host 令牌用于开局，请妥善保存。</p>
-                    <div class="lobby-seats" id="createSeats"></div>
-                    <button class="btn btn-success" id="startBtn" disabled>开始对战</button>
-                    <div class="waiting-line" id="createWaiting"></div>
-                </div>
-            </div>
-
-            <div id="tab-join" class="lobby-tab-content">
-                <div class="field">
-                    <label>房间 ID</label>
-                    <input id="joinId" type="text" placeholder="粘贴房间 ID" spellcheck="false">
-                    <span class="err" id="joinErr"></span>
-                </div>
-                <button class="btn btn-primary btn-block" id="joinBtn">加入房间</button>
-
-                <div id="joinResult" class="lobby-result hidden">
-                    <div class="info-row">
-                        <span class="info-label">Player</span>
-                        <code class="info-value" id="joinToken"></code>
-                        <button class="icon-btn" data-copy="joinToken">复制</button>
-                    </div>
-                    <p class="lobby-hint" id="joinHintText">这是你的出招凭证，请保存。等待房主开局…</p>
-                    <div class="lobby-seats" id="joinSeats"></div>
-                    <button class="btn btn-success" id="enterBtn" disabled>进入对局</button>
-                    <div class="waiting-line" id="joinWaiting"></div>
-                </div>
-            </div>
-        </section>
-
-        <section class="card" id="spectateCard">
-            <h2><span class="ico">👀</span>观战</h2>
-            <div class="field">
-                <label>对局 ID <em>无需令牌，只看不能下</em></label>
-                <input id="spectateId" type="text" placeholder="粘贴已有对局 ID" spellcheck="false">
-                <span class="err" id="spectateErr"></span>
-            </div>
-            <button class="btn btn-ghost btn-block" id="spectateBtn">观战</button>
+            <p class="back-hint">创建、加入房间或观战请前往大厅页。</p>
+            <a class="btn btn-ghost btn-block back-link" href="lobby.html">← 返回对局大厅</a>
         </section>
 
         <section class="card hidden" id="matchInfoCard">
             <h2><span class="ico">📋</span>对局信息<span class="spacer"></span>
                 <button class="icon-btn" id="newMatchBtn" title="结束当前视图，回到大厅">新对局</button>
-            </h2>
-            <div class="kv">
+            </h2>            <div class="kv">
                 <div class="row"><span class="k">ID</span><span class="v mono" id="miId"></span>
                     <button class="icon-btn" id="copyIdBtn">复制</button>
                 </div>
@@ -1538,9 +1450,9 @@
                 <i class="f1"></i><i></i><i class="f0"></i><i></i>
                 <i></i><i class="f3"></i><i></i><i class="f2"></i>
             </div>
-            <h3>还没有进行中的对局</h3>
-            <p>在左侧创建房间并邀请对手，或加入别人的房间。<br>轮流涂色，占据格子最多的一方获胜。</p>
-            <button class="btn btn-primary" id="quickStartBtn">⚡ 快速开局（8×8 · 2 人 · 20 回合）</button>
+            <h3>这里还没有进行中的对局</h3>
+            <p>请前往对局大厅创建房间并邀请对手，或加入别人的房间。<br>轮流涂色，占据格子最多的一方获胜。</p>
+            <a class="btn btn-primary" href="lobby.html">前往对局大厅</a>
         </div>
 
         <div class="board-shell hidden" id="boardShell">
@@ -1622,12 +1534,6 @@
 
     /* ================= Constants ================= */
 
-    const LIMITS = {
-        width: {min: 1, max: 32},
-        height: {min: 1, max: 32},
-        contestantCount: {min: 2, max: 4},
-        turnsPerContestant: {min: 1, max: 200},
-    };
     const COLORS = ["#ff6b6b", "#4d96ff", "#f2c94c", "#9b5de5"];
     const SKILL_NAMES = {dot: "单点", cross: "十字", line: "行列"};
     const SKILL_GLYPHS = {dot: "●", cross: "✚", line: "☰"};
@@ -1647,11 +1553,6 @@
         token_invalid: "选手令牌无效，不属于本对局",
         not_your_turn: "还没轮到该选手出招",
         match_not_started: "对局尚未开始，请等待房主开局",
-        match_already_started: "对局已经开始，无法再加入",
-        match_full: "房间已满，无法再加入",
-        not_enough_players: "选手未到齐，暂时无法开局",
-        host_token_required: "缺少房主令牌，无法开局",
-        host_token_invalid: "房主令牌无效",
     };
 
     /* ================= State ================= */
@@ -1660,8 +1561,7 @@
         match: null,        // API summary: { id, config, cells, cooldowns, currentContestant, movesCompleted, ply, finished, scores, ranking? }
         myToken: null,      // this page's single player token — null means spectator
         mySeat: null,       // contestant index bound to myToken
-        hostToken: null,    // present only in the room creator's page
-        lobby: null,        // lobby view while waiting: { phase, contestantCount, joinedCount, seats }
+        hostToken: null,    // present only when this page created the room
         role: null,         // "host" | "player" | "spectator" | null
         log: [],
         skill: "dot",
@@ -1671,7 +1571,6 @@
         logLoaded: false,
     };
 
-    let lobbyTimer = null;   // polls /lobby while waiting in the room
     let watchTimer = null;   // polls /matches/:id while it's someone else's turn
 
     function amCurrentPlayer() {
@@ -1710,20 +1609,11 @@
     const els = {
         healthBadge: $("#healthBadge"), healthText: $("#healthText"),
         apiBase: $("#apiBase"), recheckBtn: $("#recheckBtn"),
-        createForm: $("#createForm"), createBtn: $("#createBtn"), hostParticipate: $("#hostParticipate"),
-        createResult: $("#createResult"), createdGameId: $("#createdGameId"),
-        createdHostToken: $("#createdHostToken"), createdTokenRow: $("#createdTokenRow"),
-        createdToken: $("#createdToken"), createSeats: $("#createSeats"),
-        startBtn: $("#startBtn"), createWaiting: $("#createWaiting"),
-        joinId: $("#joinId"), joinBtn: $("#joinBtn"), joinErr: $("#joinErr"),
-        joinResult: $("#joinResult"), joinToken: $("#joinToken"), joinHintText: $("#joinHintText"),
-        joinSeats: $("#joinSeats"), enterBtn: $("#enterBtn"), joinWaiting: $("#joinWaiting"),
-        spectateId: $("#spectateId"), spectateBtn: $("#spectateBtn"), spectateErr: $("#spectateErr"),
         matchInfoCard: $("#matchInfoCard"),
         miId: $("#miId"), miBoard: $("#miBoard"), miContestants: $("#miContestants"),
         miTurns: $("#miTurns"), miStatus: $("#miStatus"), miSeat: $("#miSeat"),
         copyIdBtn: $("#copyIdBtn"), newMatchBtn: $("#newMatchBtn"),
-        emptyState: $("#emptyState"), quickStartBtn: $("#quickStartBtn"),
+        emptyState: $("#emptyState"),
         boardShell: $("#boardShell"), board: $("#board"),
         boardOverlay: $("#boardOverlay"), overlayText: $("#overlayText"),
         turnWho: $("#turnWho"), turnProgress: $("#turnProgress"), turnPly: $("#turnPly"),
@@ -1778,17 +1668,6 @@
         },
         health() {
             return this.request("GET", "/health");
-        },
-        createRoom(cfg) {
-            return this.request("POST", "/matches", cfg);
-        },
-        joinRoom(id) {
-            return this.request("POST", `/matches/${encodeURIComponent(id)}/join`);
-        },
-        startRoom(id, hostToken) {
-            return this.request("POST", `/matches/${encodeURIComponent(id)}/start`, undefined, {
-                authorization: `Bearer ${hostToken}`,
-            });
         },
         getLobby(id) {
             return this.request("GET", `/matches/${encodeURIComponent(id)}/lobby`);
@@ -1858,51 +1737,6 @@
         healthTimer = setInterval(checkHealth, 15000);
     }
 
-    /* ================= Form validation ================= */
-
-    function validateIntField(input, {min, max}, {optional = false} = {}) {
-        const raw = input.value.trim();
-        const errEl = input.parentElement.querySelector(".err");
-        const fail = (msg) => {
-            input.classList.add("invalid");
-            errEl.textContent = msg;
-            return null;
-        };
-        if (raw === "") {
-            if (optional) {
-                input.classList.remove("invalid");
-                errEl.textContent = "";
-                return undefined;
-            }
-            return fail("必填");
-        }
-        const n = Number(raw);
-        if (!Number.isInteger(n)) return fail("必须为整数");
-        if (n < min || n > max) return fail(`需在 ${min}–${max} 之间`);
-        input.classList.remove("invalid");
-        errEl.textContent = "";
-        return n;
-    }
-
-    function readCreateForm() {
-        const f = els.createForm;
-        const width = validateIntField(f.width, LIMITS.width);
-        const height = validateIntField(f.height, LIMITS.height);
-        const contestantCount = validateIntField(f.contestantCount, LIMITS.contestantCount);
-        const turnsPerContestant = validateIntField(f.turnsPerContestant, LIMITS.turnsPerContestant);
-        let firstContestant = validateIntField(f.firstContestant, {min: 0, max: 3}, {optional: true});
-        if (firstContestant === null) return null;
-        if ([width, height, contestantCount, turnsPerContestant].some((v) => v === null)) return null;
-        if (firstContestant !== undefined && contestantCount !== null && firstContestant >= contestantCount) {
-            f.firstContestant.classList.add("invalid");
-            f.firstContestant.parentElement.querySelector(".err").textContent = `需小于选手数量（${contestantCount}）`;
-            return null;
-        }
-        const body = {width, height, contestantCount, turnsPerContestant};
-        if (firstContestant !== undefined) body.firstContestant = firstContestant;
-        return body;
-    }
-
     /* ================= Room flow ================= */
 
     function setBusy(btn, busy, busyText) {
@@ -1917,166 +1751,28 @@
     }
 
     function stopLobbyPolling() {
-        if (lobbyTimer) {
-            clearInterval(lobbyTimer);
-            lobbyTimer = null;
-        }
+        /* lobby waiting-room polling lives on lobby.html */
     }
 
-    function renderSeats(container, lobby, {markHost = false} = {}) {
-        if (!lobby) {
-            container.innerHTML = "";
-            return;
-        }
-        const rows = [];
-        for (let i = 0; i < lobby.contestantCount; i++) {
-            const taken = i < lobby.joinedCount;
-            const me = state.mySeat === i && taken;
-            rows.push(`<div class="lobby-seat ${taken ? "taken" : ""}">
-        <span class="chip-color" style="background:${COLORS[i]};width:12px;height:12px;border-radius:4px"></span>
-        <span>选手 ${i + 1}${taken ? " · 已就位" : " · 等待加入"}</span>
-        ${me ? '<span class="tag">你</span>' : ""}${markHost && i === 0 && taken && state.role === "host" && me ? "" : ""}
-      </div>`);
-        }
-        container.innerHTML = rows.join("");
+    /** A room that has not started cannot be played here — send the user to the lobby. */
+    function backToLobby(id) {
+        toast("info", "房间尚未开局，正在返回大厅…");
+        localStorage.removeItem("tootoo.lastMatchId");
+        setTimeout(() => {
+            location.href = "lobby.html" + (id ? "#" + encodeURIComponent(id) : "");
+        }, 500);
     }
 
-    function updateHostLobbyView(lobby) {
-        state.lobby = lobby;
-        renderSeats(els.createSeats, lobby);
-        const full = lobby.joinedCount >= lobby.contestantCount;
-        els.startBtn.disabled = !full;
-        els.createWaiting.textContent = full
-            ? "选手已到齐，可以开局。"
-            : `等待选手加入（${lobby.joinedCount} / ${lobby.contestantCount}）…`;
-    }
-
-    function updateJoinLobbyView(lobby) {
-        state.lobby = lobby;
-        renderSeats(els.joinSeats, lobby);
-        const full = lobby.joinedCount >= lobby.contestantCount;
-        els.joinWaiting.textContent = full
-            ? "选手已到齐，等待房主开局…"
-            : `等待选手加入（${lobby.joinedCount} / ${lobby.contestantCount}）…`;
-    }
-
-    async function pollLobby(id) {
-        try {
-            const lobby = await api.getLobby(id);
-            if (state.role === "host") updateHostLobbyView(lobby);
-            else updateJoinLobbyView(lobby);
-            if (lobby.phase === "active") {
-                stopLobbyPolling();
-                await enterMatch(id, {announce: true});
-            }
-        } catch { /* transient — next tick retries */ }
-    }
-
-    function startLobbyPolling(id) {
-        stopLobbyPolling();
-        lobbyTimer = setInterval(() => pollLobby(id), 1500);
-    }
-
-    async function createRoom(body) {
-        setBusy(els.createBtn, true, "创建中…");
-        try {
-            const data = await api.createRoom(body);
-            state.role = "host";
-            state.hostToken = data.hostToken;
-            state.myToken = data.player ? data.player.token : null;
-            state.mySeat = data.player ? data.player.contestant : null;
-            saveSession(data.id);
-            localStorage.setItem("tootoo.lastMatchId", data.id);
-
-            els.createdGameId.textContent = data.id;
-            els.createdHostToken.textContent = data.hostToken;
-            els.createdTokenRow.classList.toggle("hidden", !data.player);
-            if (data.player) els.createdToken.textContent = data.player.token;
-            els.createResult.classList.remove("hidden");
-            els.startBtn.disabled = true;
-            updateHostLobbyView(data.lobby);
-            startLobbyPolling(data.id);
-            toast("success", "房间已创建，等待选手加入");
-        } catch (err) {
-            toast("error", describeError(err));
-        } finally {
-            setBusy(els.createBtn, false);
-        }
-    }
-
-    async function joinRoom(id) {
-        if (!id) {
-            els.joinErr.textContent = "请输入房间 ID";
-            return;
-        }
-        els.joinErr.textContent = "";
-        setBusy(els.joinBtn, true, "加入中…");
-        try {
-            const data = await api.joinRoom(id);
-            state.role = "player";
-            state.hostToken = null;
-            state.myToken = data.player.token;
-            state.mySeat = data.player.contestant;
-            saveSession(id);
-            localStorage.setItem("tootoo.lastMatchId", id);
-
-            els.joinToken.textContent = data.player.token;
-            els.joinResult.classList.remove("hidden");
-            els.enterBtn.disabled = true;
-            updateJoinLobbyView(data.lobby);
-            startLobbyPolling(id);
-            toast("success", `已加入房间，你是选手 ${data.player.contestant + 1}`);
-        } catch (err) {
-            els.joinErr.textContent = describeError(err);
-            toast("error", describeError(err));
-        } finally {
-            setBusy(els.joinBtn, false);
-        }
-    }
-
-    async function startRoom() {
-        const id = els.createdGameId.textContent.trim();
-        if (!id || !state.hostToken) return;
-        setBusy(els.startBtn, true, "开局中…");
-        try {
-            const summary = await api.startRoom(id, state.hostToken);
-            stopLobbyPolling();
-            acceptMatch(summary);
-            startWatchPolling(id);
-            refreshLog();
-            toast("success", "对局开始，轮到选手 " + (summary.currentContestant + 1) + " 出手");
-        } catch (err) {
-            toast("error", describeError(err));
-        } finally {
-            setBusy(els.startBtn, false);
-        }
-    }
-
-    async function enterMatch(id, {announce = false, silent404 = false} = {}) {
+    async function enterMatch(id, {silent404 = false} = {}) {
         try {
             const summary = await api.getMatch(id);
             if (summary.phase === "lobby") {
-                // Still waiting in the room — restore lobby UI.
-                if (state.role === "host") {
-                    els.createResult.classList.remove("hidden");
-                    els.createdGameId.textContent = id;
-                    els.createdHostToken.textContent = state.hostToken || "";
-                    els.createdTokenRow.classList.toggle("hidden", !state.myToken);
-                    if (state.myToken) els.createdToken.textContent = state.myToken;
-                    updateHostLobbyView(summary.lobby);
-                } else if (state.role === "player") {
-                    els.joinResult.classList.remove("hidden");
-                    els.joinToken.textContent = state.myToken || "";
-                    els.enterBtn.disabled = true;
-                    updateJoinLobbyView(summary.lobby);
-                }
-                startLobbyPolling(id);
+                backToLobby(id);
                 return;
             }
             acceptMatch(summary);
             startWatchPolling(id);
             refreshLog();
-            if (announce) toast("success", "对局已开始！");
         } catch (err) {
             if (silent404 && err instanceof ApiError && err.status === 404) {
                 localStorage.removeItem("tootoo.lastMatchId");
@@ -2430,9 +2126,8 @@
     </div>`;
         els.modalRoot.querySelector('[data-act="close"]').addEventListener("click", closeModal);
         els.modalRoot.querySelector('[data-act="again"]').addEventListener("click", () => {
-            closeModal();
             resetToSetup();
-            window.scrollTo({top: 0, behavior: "smooth"});
+            location.href = "lobby.html";
         });
         els.modalRoot.querySelector(".modal-mask").addEventListener("click", (e) => {
             if (e.target.classList.contains("modal-mask")) closeModal();
@@ -2460,111 +2155,17 @@
         state.myToken = null;
         state.mySeat = null;
         state.hostToken = null;
-        state.lobby = null;
         state.role = null;
         state.snapshot = null;
         state.log = [];
         state.logLoaded = false;
-        stopLobbyPolling();
         stopWatchPolling();
         localStorage.removeItem("tootoo.lastMatchId");
-        els.joinId.value = "";
-        els.spectateId.value = "";
-        els.joinErr.textContent = "";
-        els.spectateErr.textContent = "";
-        els.createResult.classList.add("hidden");
-        els.joinResult.classList.add("hidden");
         els.logList.innerHTML = '<div class="log-empty">开局后，这里会按时间记录每一步着法。<br>点击任意一条可回看当时的棋盘快照。</div>';
         renderAll();
     }
 
     /* ================= Events ================= */
-
-    els.createForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const body = readCreateForm();
-        if (body) {
-            body.participate = els.hostParticipate.checked;
-            createRoom(body);
-        }
-    });
-    ["input", "change"].forEach((ev) =>
-        els.createForm.addEventListener(ev, (e) => {
-            if (e.target.matches("input")) readCreateFormSilently(e.target);
-        })
-    );
-
-    function readCreateFormSilently(target) {
-        const f = els.createForm;
-        if (target === f.firstContestant) {
-            validateIntField(f.firstContestant, {min: 0, max: 3}, {optional: true});
-        } else if (target.name && LIMITS[target.name]) {
-            validateIntField(target, LIMITS[target.name]);
-        }
-    }
-
-    els.quickStartBtn.addEventListener("click", () => {
-        document.querySelector('.lobby-tab[data-tab="create"]').click();
-        els.createForm.requestSubmit();
-    });
-    els.joinBtn.addEventListener("click", () => joinRoom(els.joinId.value.trim()));
-    els.joinId.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") joinRoom(els.joinId.value.trim());
-    });
-
-    els.startBtn.addEventListener("click", startRoom);
-
-    els.enterBtn.addEventListener("click", () => {
-        const id = els.joinId.value.trim() || localStorage.getItem("tootoo.lastMatchId");
-        if (id) enterMatch(id, {announce: false});
-    });
-
-    async function spectate(id) {
-        if (!id) {
-            els.spectateErr.textContent = "请输入对局 ID";
-            return;
-        }
-        els.spectateErr.textContent = "";
-        setBusy(els.spectateBtn, true, "加载中…");
-        try {
-            state.role = "spectator";
-            state.myToken = null;
-            state.mySeat = null;
-            state.hostToken = null;
-            await enterMatch(id);
-            if (state.match) toast("success", "已进入观战");
-        } finally {
-            setBusy(els.spectateBtn, false);
-        }
-    }
-
-    els.spectateBtn.addEventListener("click", () => spectate(els.spectateId.value.trim()));
-    els.spectateId.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") spectate(els.spectateId.value.trim());
-    });
-
-    // Lobby tabs + credential copy buttons
-    document.querySelectorAll(".lobby-tab").forEach((tab) =>
-        tab.addEventListener("click", () => {
-            document.querySelectorAll(".lobby-tab").forEach((t) => t.classList.remove("active"));
-            document.querySelectorAll(".lobby-tab-content").forEach((c) => c.classList.remove("active"));
-            tab.classList.add("active");
-            $("#tab-" + tab.dataset.tab).classList.add("active");
-        })
-    );
-
-    document.querySelectorAll("[data-copy]").forEach((btn) =>
-        btn.addEventListener("click", async () => {
-            const text = document.getElementById(btn.dataset.copy)?.textContent || "";
-            if (!text) return;
-            try {
-                await navigator.clipboard.writeText(text);
-                toast("success", "已复制", 1500);
-            } catch {
-                toast("info", "复制失败，请手动选择复制");
-            }
-        })
-    );
 
     els.copyIdBtn.addEventListener("click", async () => {
         if (!state.match) return;
@@ -2576,7 +2177,10 @@
         }
     });
 
-    els.newMatchBtn.addEventListener("click", resetToSetup);
+    els.newMatchBtn.addEventListener("click", () => {
+        resetToSetup();
+        location.href = "lobby.html";
+    });
 
     els.recheckBtn.addEventListener("click", checkHealth);
     els.healthBadge.addEventListener("click", () => {
@@ -2677,20 +2281,23 @@
         checkHealth();
         startHealthPolling();
 
+        const rawHash = location.hash.replace(/^#/, "");
+        const [idFromHash, query] = rawHash.split("?");
+        const forceSpectate = /(?:^|&)spectate=1(?:&|$)/.test(query || "");
         const lastId = localStorage.getItem("tootoo.lastMatchId");
-        if (!lastId) return;
+        const id = (idFromHash ? decodeURIComponent(idFromHash) : "") || lastId;
+        if (!id) return;
 
-        const session = readSession(lastId);
-        if (session && session.myToken) {
+        const session = readSession(id);
+        if (!forceSpectate && session && session.myToken) {
             state.myToken = session.myToken;
             state.mySeat = session.mySeat ?? null;
             state.hostToken = session.hostToken || null;
             state.role = session.hostToken ? "host" : "player";
-            enterMatch(lastId, {silent404: true});
+            enterMatch(id, {silent404: true});
         } else {
             state.role = "spectator";
-            els.spectateId.value = lastId;
-            spectate(lastId);
+            enterMatch(id, {silent404: true});
         }
     })();
 </script>
